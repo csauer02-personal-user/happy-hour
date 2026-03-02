@@ -37,25 +37,25 @@ export default function VenueCard({
       }}
       aria-selected={isSelected}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-brand-purple truncate">
+          <h3 className="font-semibold text-sm text-brand-purple truncate">
             {venue.restaurant_name}
           </h3>
-          <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+          <p className="text-xs text-gray-600 mt-0.5 line-clamp-2">
             {venue.deal}
           </p>
         </div>
 
-        <div className="flex flex-col items-center gap-1.5 shrink-0">
+        <div className="flex flex-col items-center gap-1 shrink-0">
           {faviconUrl && (
-            <div className="w-8 h-8 bg-white rounded-lg shadow-sm flex items-center justify-center">
+            <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={faviconUrl}
                 alt=""
-                width={20}
-                height={20}
+                width={16}
+                height={16}
                 className="rounded-sm"
                 loading="lazy"
               />

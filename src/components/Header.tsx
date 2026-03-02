@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { DayFilter, DAYS, DAY_LABELS, getTodayKey } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
@@ -24,6 +24,8 @@ export default function Header({
   const router = useRouter();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -60,11 +62,24 @@ export default function Header({
     return () => subscription.unsubscribe();
   }, []);
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
     setUserEmail(null);
     setIsAdmin(false);
+    setMenuOpen(false);
     router.push("/");
     router.refresh();
   };
@@ -72,89 +87,105 @@ export default function Header({
   return (
     <header className="fixed top-0 left-0 right-0 z-50">
       <div className="rainbow-bar" />
-      <div className="bg-brand-gradient px-4 py-3">
-        <div className="max-w-screen-2xl mx-auto flex items-center justify-between gap-4">
-          {/* Logo / Title */}
-          <div className="flex items-center gap-2 shrink-0">
-            <span className="text-xl md:text-2xl font-bold text-white tracking-tight">
-              ATL Happy Hour
-            </span>
-          </div>
+      <div className="bg-brand-gradient px-2 py-1">
+        <div className="max-w-screen-2xl mx-auto flex items-center gap-2">
+          {/* Logo */}
+          <span className="text-base font-bold text-white tracking-tight shrink-0">
+            ATL HH
+          </span>
 
-          {/* Day Filters */}
-          <nav className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
-            {DAYS.map((day) => (
-              <button
-                key={day}
-                onClick={() => onDayChange(day)}
-                className={`btn-day ${activeDay === day ? "btn-day-active" : ""}`}
-                aria-pressed={activeDay === day}
-              >
-                <span className="hidden sm:inline">{DAY_LABELS[day].full}</span>
-                <span className="sm:hidden">{DAY_LABELS[day].short}</span>
-              </button>
-            ))}
+          {/* Day Filters — horizontal scroll strip */}
+          <nav className="flex-1 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-0.5 w-max">
+              {DAYS.map((day) => (
+                <button
+                  key={day}
+                  onClick={() => onDayChange(day)}
+                  className={`btn-day whitespace-nowrap ${activeDay === day ? "btn-day-active" : ""}`}
+                  aria-pressed={activeDay === day}
+                >
+                  {DAY_LABELS[day].short}
+                </button>
+              ))}
+              {/* Happening Now inline */}
+              {isWeekday && (
+                <button
+                  onClick={onHappeningNowToggle}
+                  className={`btn-day whitespace-nowrap ${
+                    happeningNow ? "btn-day-active" : ""
+                  }`}
+                  aria-pressed={happeningNow}
+                >
+                  <span
+                    className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${
+                      happeningNow ? "bg-brand-purple animate-pulse" : "bg-white/60"
+                    }`}
+                  />
+                  Now
+                </button>
+              )}
+            </div>
           </nav>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Happening Now Toggle */}
-            {isWeekday && (
-              <button
-                onClick={onHappeningNowToggle}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                  happeningNow
-                    ? "bg-brand-yellow text-brand-purple shadow-md"
-                    : "border border-white/30 text-white/80 hover:bg-white/20"
-                }`}
-                aria-pressed={happeningNow}
-              >
-                <span
-                  className={`inline-block w-2 h-2 rounded-full ${
-                    happeningNow ? "bg-brand-purple animate-pulse" : "bg-white/60"
-                  }`}
-                />
-                <span className="hidden md:inline">Happening Now</span>
-                <span className="md:hidden">Now</span>
-              </button>
-            )}
+          {/* Menu button */}
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex items-center justify-center w-9 h-9 rounded-full text-white/80 hover:bg-white/20 transition-colors"
+              aria-label="Menu"
+            >
+              {menuOpen ? (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
 
-            {userEmail ? (
-              <>
-                <Link
-                  href="/deal-updater"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-white/15 border border-white/30 text-white hover:bg-white/25 hover:scale-105 backdrop-blur-sm"
-                >
-                  <span className="hidden md:inline">Deal Updater</span>
-                  <span className="md:hidden">+</span>
-                </Link>
-                {isAdmin && (
+            {/* Dropdown */}
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
+                {userEmail ? (
+                  <>
+                    <div className="px-3 py-2 border-b border-gray-100">
+                      <p className="text-xs text-gray-500 truncate">{userEmail}</p>
+                    </div>
+                    <Link
+                      href="/deal-updater"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px]"
+                    >
+                      Deal Updater
+                    </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px]"
+                      >
+                        Admin
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left flex items-center gap-2 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 min-h-[44px]"
+                    >
+                      Sign Out
+                    </button>
+                  </>
+                ) : (
                   <Link
-                    href="/admin"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-white/15 border border-white/30 text-white hover:bg-white/25 hover:scale-105 backdrop-blur-sm"
+                    href="/login"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 min-h-[44px]"
                   >
-                    <span className="hidden md:inline">Admin</span>
-                    <span className="md:hidden">⚙️</span>
+                    &#x1f984; Members
                   </Link>
                 )}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-white/15 border border-white/30 text-white backdrop-blur-sm">
-                  <span className="text-base">&#x1f984;</span>
-                  <span className="hidden md:inline max-w-[120px] truncate">{userEmail}</span>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-white/15 border border-white/30 text-white hover:bg-white/25 hover:scale-105 backdrop-blur-sm"
-                >
-                  <span>Sign Out</span>
-                </button>
-              </>
-            ) : (
-              <Link
-                href="/login"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 bg-white/15 border border-white/30 text-white hover:bg-white/25 hover:scale-105 backdrop-blur-sm"
-              >
-                <span className="text-base">&#x1f984;</span>
-                <span className="hidden md:inline">Members</span>
-              </Link>
+              </div>
             )}
           </div>
         </div>

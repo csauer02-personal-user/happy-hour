@@ -202,8 +202,8 @@ export default function MapView(props: MapViewProps) {
   if (!apiKey) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-100">
-        <div className="text-center p-8">
-          <div className="text-4xl mb-4">🗺️</div>
+        <div className="text-center p-4">
+          <div className="text-2xl mb-2">🗺️</div>
           <p className="text-gray-500 text-sm">
             Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY to enable the map
           </p>
@@ -213,7 +213,7 @@ export default function MapView(props: MapViewProps) {
   }
 
   return (
-    <div className="flex-1 min-h-[50vh] md:min-h-0 relative">
+    <div className="flex-1 min-h-0 md:min-h-0 relative">
       <APIProvider apiKey={apiKey}>
         <Map
           defaultCenter={ATL_CENTER}

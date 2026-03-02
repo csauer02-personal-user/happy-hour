@@ -4,8 +4,8 @@
 
 @layer base {
   :root {
-    --header-height: 64px;
-    --footer-height: 32px;
+    --header-height: 48px;
+    --footer-height: 28px;
   }
 
   body {
@@ -15,8 +15,9 @@
 
 @layer components {
   .btn-day {
-    @apply px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200
-           border border-white/30 text-white/80 hover:bg-white/20 hover:text-white;
+    @apply px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-200
+           border border-white/30 text-white/80 hover:bg-white/20 hover:text-white
+           min-h-[44px] min-w-[44px] flex items-center justify-center;
   }
 
   .btn-day-active {
@@ -24,8 +25,8 @@
   }
 
   .venue-card {
-    @apply bg-white rounded-xl p-4 shadow-sm border border-gray-100
-           hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer;
+    @apply bg-white rounded-lg p-2.5 shadow-sm border border-gray-100
+           hover:shadow-md transition-all duration-200 cursor-pointer;
   }
 
   .venue-card-selected {
@@ -33,9 +34,18 @@
   }
 
   .neighborhood-header {
-    @apply sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm px-4 py-2
+    @apply sticky top-0 z-10 bg-gray-50/95 backdrop-blur-sm px-3 py-1.5
            flex items-center justify-between cursor-pointer
            hover:bg-gray-100 transition-colors duration-150;
+  }
+
+  /* Hide scrollbar on day strip */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
@@ -60,7 +70,7 @@
     #750787 83.33%,
     #e40303 100%
   );
-  height: 4px;
+  height: 3px;
 }
 
 /* Scrollbar styling */

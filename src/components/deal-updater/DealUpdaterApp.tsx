@@ -254,15 +254,15 @@ export default function DealUpdaterApp() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-4 py-3 shadow-xl">
+        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-3 py-2 shadow-xl">
           <div className="flex items-center justify-between">
-            <a href="/" className="p-2 hover:bg-white/20 rounded-xl transition-colors text-white text-sm">&#x2190; Back</a>
-            <h1 className="font-semibold text-lg text-white">&#x1f984; Deal Updater</h1>
-            <div className="w-16" />
+            <a href="/" className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white text-sm min-h-[44px] flex items-center">&#x2190; Back</a>
+            <h1 className="font-semibold text-base text-white">&#x1f984; Deal Updater</h1>
+            <div className="w-12" />
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-6 gap-6">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm w-full max-w-md flex items-center justify-between">
               <span>{error}</span>
@@ -272,17 +272,17 @@ export default function DealUpdaterApp() {
 
           {/* Photo preview strip */}
           {capturedImages.length > 0 && (
-            <div className="flex gap-3 overflow-x-auto pb-2 w-full max-w-md">
+            <div className="flex gap-2 overflow-x-auto pb-1 w-full max-w-md">
               {capturedImages.map((img, idx) => (
                 <div key={idx} className="relative flex-shrink-0">
                   <img
                     src={img}
                     alt={`Photo ${idx + 1}`}
-                    className="w-24 h-24 object-cover rounded-2xl border-4 border-purple-300 shadow-lg"
+                    className="w-20 h-20 object-cover rounded-xl border-2 border-purple-300 shadow-md"
                   />
                   <button
                     onClick={() => removeImage(idx)}
-                    className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full flex items-center justify-center shadow-lg text-sm font-bold"
+                    className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full flex items-center justify-center shadow-md text-xs font-bold"
                   >
                     &#x00d7;
                   </button>
@@ -292,53 +292,53 @@ export default function DealUpdaterApp() {
           )}
 
           {/* Main capture area */}
-          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-purple-200">
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-4 max-w-md w-full text-center border-2 border-purple-200">
             {capturedImages.length === 0 ? (
               <>
-                <div className="w-28 h-28 mx-auto mb-6 bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 rounded-full flex items-center justify-center shadow-lg">
-                  <span className="text-6xl">&#x1f4f8;</span>
+                <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-r from-pink-200 via-purple-200 to-blue-200 rounded-full flex items-center justify-center shadow-lg">
+                  <span className="text-3xl">&#x1f4f8;</span>
                 </div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                <h2 className="text-lg font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-1">
                   Snap the Deal
                 </h2>
-                <p className="text-gray-500 text-sm mb-6">
-                  Take a photo of the happy hour menu, sign, or deal board. The AI unicorn will do the rest &#x2728;
+                <p className="text-gray-500 text-xs mb-3">
+                  Photo the happy hour menu — AI does the rest &#x2728;
                 </p>
               </>
             ) : (
               <>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+                <h2 className="text-lg font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-1">
                   {capturedImages.length} photo{capturedImages.length > 1 ? "s" : ""} ready &#x2728;
                 </h2>
-                <p className="text-gray-500 text-sm mb-6">
+                <p className="text-gray-500 text-xs mb-3">
                   Add more photos or let the AI work its magic
                 </p>
               </>
             )}
 
             {/* Camera + Gallery buttons */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-3">
               <button
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-pink-300 rounded-2xl hover:bg-pink-50 transition-all group"
+                className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-pink-300 rounded-xl hover:bg-pink-50 transition-all group min-h-[44px]"
               >
-                <Camera size={28} className="text-pink-500 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-pink-600">Camera</span>
+                <Camera size={24} className="text-pink-500 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-pink-600">Camera</span>
               </button>
 
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center gap-2 p-4 border-2 border-dashed border-purple-300 rounded-2xl hover:bg-purple-50 transition-all group"
+                className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-purple-300 rounded-xl hover:bg-purple-50 transition-all group min-h-[44px]"
               >
-                <ImagePlus size={28} className="text-purple-500 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-purple-600">Gallery</span>
+                <ImagePlus size={24} className="text-purple-500 group-hover:scale-110 transition-transform" />
+                <span className="text-xs font-medium text-purple-600">Gallery</span>
               </button>
             </div>
 
             {/* Optional text input toggle */}
             <button
               onClick={() => setShowTextInput(!showTextInput)}
-              className="text-sm text-purple-500 hover:text-purple-700 transition-colors flex items-center gap-1 mx-auto mb-3"
+              className="text-xs text-purple-500 hover:text-purple-700 transition-colors flex items-center gap-1 mx-auto mb-2"
             >
               {showTextInput ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               {showTextInput ? "Hide text input" : "Or paste deal text instead"}
@@ -349,8 +349,8 @@ export default function DealUpdaterApp() {
                 value={pasteText}
                 onChange={(e) => setPasteText(e.target.value)}
                 placeholder="Paste or type the deal info here..."
-                className="w-full p-3 border-2 border-purple-200 rounded-xl resize-none focus:ring-4 focus:ring-purple-200 focus:border-purple-400 transition-all text-sm mb-4"
-                rows={3}
+                className="w-full p-2 border-2 border-purple-200 rounded-lg resize-none focus:ring-2 focus:ring-purple-200 focus:border-purple-400 transition-all text-sm mb-3"
+                rows={2}
               />
             )}
 
@@ -377,7 +377,7 @@ export default function DealUpdaterApp() {
           {(capturedImages.length > 0 || pasteText.trim()) && (
             <button
               onClick={runMagic}
-              className="w-full max-w-md bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-3"
+              className="w-full max-w-md bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-3 rounded-xl font-bold text-base hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all transform hover:scale-105 shadow-xl flex items-center justify-center gap-2 min-h-[44px]"
             >
               <span className="text-2xl">&#x1f984;</span>
               <span>Let the AI Work Its Magic</span>
@@ -405,18 +405,18 @@ export default function DealUpdaterApp() {
           <div className="absolute top-[60%] right-[8%] text-2xl animate-bounce opacity-20" style={{ animationDelay: "0.8s", animationDuration: "3.8s" }}>&#x1f31f;</div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4 border-purple-300 relative z-10">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-2xl p-4 max-w-sm w-full text-center border-2 border-purple-300 relative z-10">
           {/* Spinning unicorn */}
-          <div className="w-32 h-32 mx-auto mb-6 relative">
+          <div className="w-20 h-20 mx-auto mb-3 relative">
             <div
-              className="w-32 h-32 rounded-full animate-spin"
+              className="w-20 h-20 rounded-full animate-spin"
               style={{
                 animationDuration: "3s",
                 background: "conic-gradient(from 0deg, #ec4899, #a855f7, #3b82f6, #10b981, #f59e0b, #ec4899)",
               }}
             />
-            <div className="absolute inset-3 bg-white rounded-full flex items-center justify-center">
-              <span className="text-5xl">&#x1f984;</span>
+            <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+              <span className="text-3xl">&#x1f984;</span>
             </div>
           </div>
 
@@ -425,7 +425,7 @@ export default function DealUpdaterApp() {
             <img
               src={capturedImages[0]}
               alt="Analyzing..."
-              className="w-28 h-28 object-cover rounded-2xl mx-auto mb-4 border-4 border-purple-300 shadow-lg opacity-80"
+              className="w-20 h-20 object-cover rounded-xl mx-auto mb-3 border-2 border-purple-300 shadow-md opacity-80"
             />
           )}
 
@@ -463,22 +463,22 @@ export default function DealUpdaterApp() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-4 py-3 shadow-xl">
+        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-3 py-2 shadow-xl">
           <div className="flex items-center justify-between">
-            <button onClick={resetApp} className="p-2 hover:bg-white/20 rounded-xl transition-colors">
-              <RotateCcw size={20} className="text-white" />
+            <button onClick={resetApp} className="p-2 hover:bg-white/20 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
+              <RotateCcw size={18} className="text-white" />
             </button>
-            <h1 className="font-semibold text-lg text-white">&#x1f984; AI Found This</h1>
+            <h1 className="font-semibold text-base text-white">&#x1f984; AI Found This</h1>
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-white/30" : "hover:bg-white/20"}`}
+              className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${isEditing ? "bg-white/30" : "hover:bg-white/20"}`}
             >
-              <Edit3 size={20} className="text-white" />
+              <Edit3 size={18} className="text-white" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 p-4 space-y-4 pb-36">
+        <div className="flex-1 p-3 space-y-3 pb-36">
           {/* Submit error */}
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm flex items-center justify-between">
@@ -487,8 +487,8 @@ export default function DealUpdaterApp() {
             </div>
           )}
           {/* Confidence indicator */}
-          <div className="flex items-center gap-3 bg-white/80 rounded-2xl p-3 border-2 border-purple-200">
-            <span className="text-2xl">&#x1f984;</span>
+          <div className="flex items-center gap-2 bg-white/80 rounded-xl p-2.5 border border-purple-200">
+            <span className="text-lg">&#x1f984;</span>
             <div className="flex-1">
               <div className="flex items-center justify-between text-sm mb-1">
                 <span className="font-medium text-purple-700">AI Confidence</span>
@@ -508,9 +508,9 @@ export default function DealUpdaterApp() {
 
           {/* Match alert */}
           {matchedEntry && (
-            <div className="bg-gradient-to-r from-pink-100 to-purple-100 border-2 border-pink-300 rounded-2xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">&#x1f3af;</span>
+            <div className="bg-gradient-to-r from-pink-100 to-purple-100 border border-pink-300 rounded-xl p-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">&#x1f3af;</span>
                 <div className="flex-1">
                   <p className="font-bold text-purple-700 text-sm">Existing match found!</p>
                   <p className="text-purple-600 text-xs">{matchedEntry.restaurant_name} &mdash; {matchedEntry.neighborhood}</p>
@@ -534,8 +534,8 @@ export default function DealUpdaterApp() {
           )}
 
           {/* Restaurant Name */}
-          <div className="bg-white rounded-2xl p-4 shadow-md border-2 border-pink-200">
-            <label className="text-xs font-semibold text-pink-600 uppercase tracking-wide">Restaurant</label>
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-pink-200">
+            <label className="text-[10px] font-semibold text-pink-600 uppercase tracking-wide">Restaurant</label>
             {isEditing ? (
               <input
                 type="text"
@@ -552,8 +552,8 @@ export default function DealUpdaterApp() {
           </div>
 
           {/* Deal Description */}
-          <div className="bg-white rounded-2xl p-4 shadow-md border-2 border-purple-200">
-            <label className="text-xs font-semibold text-purple-600 uppercase tracking-wide">Happy Hour Deal</label>
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-purple-200">
+            <label className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide">Happy Hour Deal</label>
             {isEditing ? (
               <textarea
                 value={extractedData.deal_description}
@@ -567,8 +567,8 @@ export default function DealUpdaterApp() {
           </div>
 
           {/* Days */}
-          <div className="bg-white rounded-2xl p-4 shadow-md border-2 border-blue-200">
-            <label className="text-xs font-semibold text-blue-600 uppercase tracking-wide mb-2 block">Days Available</label>
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-blue-200">
+            <label className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide mb-1.5 block">Days Available</label>
             <div className="grid grid-cols-7 gap-1">
               {(["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const).map((day) => (
                 <button
@@ -591,11 +591,11 @@ export default function DealUpdaterApp() {
         </div>
 
         {/* Fixed bottom submit */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t-2 border-purple-200 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-1.5">
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-3.5 rounded-2xl font-bold text-lg hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white py-3 rounded-xl font-bold text-base hover:from-pink-600 hover:via-purple-600 hover:to-blue-600 transition-all shadow-xl flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
           >
             <Check size={22} />
             <span>{isSubmitting ? "Saving..." : matchedEntry ? "Update This Deal" : "Add New Deal"}</span>
@@ -604,13 +604,13 @@ export default function DealUpdaterApp() {
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => { setIsEditing(!isEditing); }}
-              className="py-2 rounded-xl text-sm font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all"
+              className="py-2 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all min-h-[44px]"
             >
               {isEditing ? "Done Editing" : "&#x270f;&#xfe0f; Edit Fields"}
             </button>
             <button
               onClick={resetApp}
-              className="py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center gap-1"
+              className="py-2 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center gap-1 min-h-[44px]"
             >
               <RotateCcw size={14} />
               Start Over
@@ -645,12 +645,12 @@ export default function DealUpdaterApp() {
           ))}
         </div>
 
-        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4 border-purple-300 relative z-10">
-          <div className="w-28 h-28 mx-auto mb-6 bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 rounded-full flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: "2s" }}>
-            <span className="text-6xl">&#x1f984;</span>
+        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 max-w-sm w-full text-center border-2 border-purple-300 relative z-10">
+          <div className="w-16 h-16 mx-auto mb-3 bg-gradient-to-r from-pink-300 via-purple-300 to-blue-300 rounded-full flex items-center justify-center shadow-lg animate-bounce" style={{ animationDuration: "2s" }}>
+            <span className="text-3xl">&#x1f984;</span>
           </div>
 
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-3">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
             Magical! &#x2728;
           </h2>
           <p className="text-gray-600 text-sm mb-4">
@@ -658,7 +658,7 @@ export default function DealUpdaterApp() {
             {extractedData?.google_place?.neighborhood && ` in ${extractedData.google_place.neighborhood}`}!
           </p>
 
-          <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 rounded-2xl p-4 border-2 border-purple-200">
+          <div className="bg-gradient-to-r from-pink-50 via-purple-50 to-blue-50 rounded-xl p-3 border border-purple-200">
             <p className="text-xs text-purple-600">Thanks for helping build Atlanta&#x27;s best happy hour guide!</p>
           </div>
         </div>
@@ -683,8 +683,8 @@ function CorrectionBox({ onSubmit }: { onSubmit: (feedback: string) => Promise<v
   };
 
   return (
-    <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl p-4 border-2 border-pink-200">
-      <label className="text-xs font-semibold text-pink-600 uppercase tracking-wide mb-2 block">
+    <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-3 border border-pink-200">
+      <label className="text-[10px] font-semibold text-pink-600 uppercase tracking-wide mb-1.5 block">
         &#x1f984; Something wrong? Tell the AI
       </label>
       <div className="flex gap-2">
@@ -694,13 +694,13 @@ function CorrectionBox({ onSubmit }: { onSubmit: (feedback: string) => Promise<v
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           placeholder="e.g. It's actually on Peachtree St..."
-          className="flex-1 p-2.5 border-2 border-pink-200 rounded-xl text-sm focus:ring-2 focus:ring-pink-300"
+          className="flex-1 p-2 border border-pink-200 rounded-lg text-sm focus:ring-2 focus:ring-pink-300 min-h-[44px]"
         />
         {text.trim() && (
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl text-sm font-medium hover:from-pink-600 hover:to-purple-600 disabled:opacity-50 transition-all"
+            className="px-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg text-sm font-medium hover:from-pink-600 hover:to-purple-600 disabled:opacity-50 transition-all min-h-[44px]"
           >
             {submitting ? "..." : "Fix"}
           </button>

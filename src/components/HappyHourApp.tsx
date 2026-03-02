@@ -122,7 +122,7 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
       {/* Main content area below fixed header */}
       <div
         className="flex flex-1 overflow-hidden"
-        style={{ marginTop: "calc(var(--header-height) + 4px)" }}
+        style={{ marginTop: "calc(var(--header-height) + 3px)" }}
       >
         {/* Mobile: stacked (sidebar top, map bottom); Desktop: side by side */}
         <div className="flex flex-col md:flex-row w-full h-full">

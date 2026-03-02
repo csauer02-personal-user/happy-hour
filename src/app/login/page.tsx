@@ -54,16 +54,16 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
-      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-5xl mb-3">🦄</div>
-          <h1 className="text-2xl font-bold text-purple-800">
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-5 w-full max-w-md">
+        <div className="text-center mb-5">
+          <div className="text-3xl mb-2">🦄</div>
+          <h1 className="text-xl font-bold text-purple-800">
             {isSignUp ? "Create Account" : "Members Sign In"}
           </h1>
-          <p className="text-purple-600 text-sm mt-1">ATL Happy Hour</p>
+          <p className="text-purple-600 text-xs mt-1">ATL Happy Hour</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label
               htmlFor="email"
@@ -77,7 +77,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70"
+              className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px]"
               placeholder="you@example.com"
             />
           </div>
@@ -95,7 +95,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70"
+              className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px]"
               placeholder="••••••••"
             />
           </div>
@@ -115,7 +115,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-2.5 px-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
           >
             {submitting
               ? isSignUp ? "Creating account…" : "Signing in…"
@@ -123,20 +123,20 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-4 text-center">
+        <div className="mt-3 text-center">
           <button
             type="button"
             onClick={() => { setIsSignUp(!isSignUp); setError(""); setSuccess(""); }}
-            className="text-sm text-purple-600 hover:text-purple-800 transition-colors"
+            className="text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px] px-4"
           >
             {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
           </button>
         </div>
 
-        <div className="mt-2 text-center">
+        <div className="mt-1 text-center">
           <Link
             href="/"
-            className="text-sm text-purple-600 hover:text-purple-800 transition-colors"
+            className="text-sm text-purple-600 hover:text-purple-800 transition-colors inline-flex items-center min-h-[44px] px-4"
           >
             ← Back to Happy Hour
           </Link>

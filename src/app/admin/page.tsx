@@ -90,21 +90,21 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-4">
+      <div className="max-w-4xl mx-auto space-y-4">
         {/* Header */}
         <div className="text-center">
-          <div className="text-4xl mb-2">🦄</div>
-          <h1 className="text-3xl font-bold text-purple-800">Admin Dashboard</h1>
-          <p className="text-purple-600 text-sm mt-1">ATL Happy Hour</p>
+          <div className="text-2xl mb-1">🦄</div>
+          <h1 className="text-xl font-bold text-purple-800">Admin Dashboard</h1>
+          <p className="text-purple-600 text-xs">ATL Happy Hour</p>
         </div>
 
         {/* Invite Section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
-          <h2 className="text-xl font-semibold text-purple-800 mb-4">Invite Member</h2>
-          <form onSubmit={handleInvite} className="flex flex-wrap gap-3 items-end">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-purple-700 mb-1">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4">
+          <h2 className="text-base font-semibold text-purple-800 mb-3">Invite Member</h2>
+          <form onSubmit={handleInvite} className="flex flex-wrap gap-2 items-end">
+            <div className="flex-1 min-w-[160px]">
+              <label className="block text-xs font-medium text-purple-700 mb-1">
                 Email
               </label>
               <input
@@ -113,17 +113,17 @@ export default function AdminPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 required
                 placeholder="user@example.com"
-                className="w-full px-4 py-2.5 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70"
+                className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px] text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-purple-700 mb-1">
+              <label className="block text-xs font-medium text-purple-700 mb-1">
                 Role
               </label>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as "admin" | "member")}
-                className="px-4 py-2.5 rounded-xl border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70"
+                className="px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px] text-sm"
               >
                 <option value="member">Member</option>
                 <option value="admin">Admin</option>
@@ -132,7 +132,7 @@ export default function AdminPage() {
             <button
               type="submit"
               disabled={inviting}
-              className="px-6 py-2.5 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="px-4 py-3 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[44px] text-sm"
             >
               {inviting ? "Sending…" : "Send Invite"}
             </button>
@@ -151,8 +151,8 @@ export default function AdminPage() {
         </div>
 
         {/* Members List */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
-          <h2 className="text-xl font-semibold text-purple-800 mb-4">Members</h2>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4">
+          <h2 className="text-base font-semibold text-purple-800 mb-3">Members</h2>
 
           {loading ? (
             <div className="flex justify-center py-8">
@@ -188,7 +188,7 @@ export default function AdminPage() {
                               e.target.value as "admin" | "member"
                             )
                           }
-                          className="px-2 py-1 rounded-lg border border-purple-200 text-xs bg-white/70 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                          className="px-2 py-2 rounded-lg border border-purple-200 text-xs bg-white/70 focus:outline-none focus:ring-2 focus:ring-purple-400 min-h-[44px]"
                         >
                           <option value="member">Member</option>
                           <option value="admin">Admin</option>
@@ -200,7 +200,7 @@ export default function AdminPage() {
                       <td className="py-3">
                         <button
                           onClick={() => handleDeactivate(user.id)}
-                          className="text-red-500 hover:text-red-700 text-xs font-medium transition-colors"
+                          className="text-red-500 hover:text-red-700 text-xs font-medium transition-colors min-h-[44px] px-2 flex items-center"
                         >
                           Remove
                         </button>

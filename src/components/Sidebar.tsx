@@ -88,8 +88,8 @@ export default function Sidebar({
 
   if (isLoading) {
     return (
-      <aside className="w-full max-h-[40vh] md:max-h-none md:w-80 lg:w-96 shrink-0 bg-gray-50 border-r border-gray-200 overflow-hidden">
-        <div className="p-4 space-y-4">
+      <aside className="w-full max-h-[40vh] md:max-h-none md:w-72 lg:w-80 shrink-0 bg-gray-50 border-r border-gray-200 overflow-hidden">
+        <div className="p-2 space-y-2">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="animate-pulse">
               <div className="h-6 bg-gray-200 rounded w-2/3 mb-3" />
@@ -105,9 +105,9 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-full max-h-[40vh] md:max-h-none md:w-80 lg:w-96 shrink-0 bg-gray-50 border-r border-gray-200 md:border-b-0 border-b flex flex-col overflow-hidden">
-      <div className="px-4 py-2 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
-        <p className="text-sm text-gray-500 font-medium">
+    <aside className="w-full max-h-[40vh] md:max-h-none md:w-72 lg:w-80 shrink-0 bg-gray-50 border-r border-gray-200 md:border-b-0 border-b flex flex-col overflow-hidden">
+      <div className="px-3 py-1 border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <p className="text-xs text-gray-500 font-medium">
           {venues.length} venue{venues.length !== 1 ? "s" : ""}
         </p>
       </div>
@@ -153,7 +153,7 @@ export default function Sidebar({
               </button>
 
               {isExpanded && (
-                <div className="px-3 py-2 space-y-2">
+                <div className="px-2 py-1 space-y-1">
                   {venueList.map((venue) => (
                     <div
                       key={venue.id}
