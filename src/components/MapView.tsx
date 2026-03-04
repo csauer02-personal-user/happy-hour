@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback, useMemo, memo, useState } from "react";
+import { useEffect, useCallback, memo, useState } from "react";
 import {
   APIProvider,
   Map,
@@ -29,7 +29,6 @@ const ATL_CENTER = { lat: 33.77, lng: -84.39 };
 
 interface MapViewProps {
   venues: Venue[];
-  filteredVenues: Venue[];
   selectedVenue: Venue | null;
   selectedNeighborhood: string | null;
   onMarkerClick: (id: number) => void;
@@ -390,7 +389,6 @@ function GpsButton({
 
 const MapContent = memo(function MapContent({
   venues,
-  filteredVenues,
   selectedVenue,
   selectedNeighborhood,
   onMarkerClick,
@@ -402,12 +400,6 @@ const MapContent = memo(function MapContent({
   venueDistances,
 }: MapViewProps) {
   const map = useMap();
-
-  // Compute which venue IDs are visible
-  const filteredIds = useMemo(
-    () => new Set(filteredVenues.map((v) => v.id)),
-    [filteredVenues]
-  );
 
   // Zoom to neighborhood when selected WITHOUT a venue — venue panTo takes priority.
   // selectedVenue is intentionally excluded from deps: deselecting a venue should NOT
@@ -470,24 +462,6 @@ const MapContent = memo(function MapContent({
     <>
       {mappableVenues.map((venue) => {
         const isSelected = selectedVenue?.id === venue.id;
-        const isFiltered = filteredIds.has(venue.id);
-        const isInNeighborhood =
-          !selectedNeighborhood ||
-          venue.neighborhood === selectedNeighborhood;
-
-        const opacity =
-          selectedVenue != null
-            ? isSelected
-              ? 1
-              : 0.2
-            : selectedNeighborhood != null
-              ? isInNeighborhood
-                ? 1
-                : 0.2
-              : isFiltered
-                ? 1
-                : 0.3;
-
         const color = MARKER_COLORS[venue.id % MARKER_COLORS.length];
 
         // Closer venues get higher z-index when distance sorting active
@@ -501,7 +475,6 @@ const MapContent = memo(function MapContent({
             position={{ lat: venue.latitude!, lng: venue.longitude! }}
             onClick={() => onMarkerClick(venue.id)}
             zIndex={zIndex}
-            style={{ opacity, transition: "opacity 0.3s" }}
           >
             <FaviconPin venue={venue} color={color} isSelected={isSelected} />
           </AdvancedMarker>
