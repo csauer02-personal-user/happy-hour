@@ -37,6 +37,8 @@
   "exclude": [
     "node_modules",
     "_old",
-    "docs"
+    "docs",
+    "e2e",
+    "playwright.config.ts"
   ]
 }

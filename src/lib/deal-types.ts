@@ -18,6 +18,8 @@ export interface GooglePlace {
 export interface ExtractedDeal {
   restaurant_name: string;
   deal_description: string;
+  deal_highlight?: string | null;
+  category_emoji?: string | null;
   days: DaySchedule;
   confidence: number;
   google_place: GooglePlace;
@@ -28,6 +30,8 @@ export interface ExistingDeal {
   id: string;
   restaurant_name: string;
   deal_description: string;
+  deal_highlight?: string | null;
+  category_emoji?: string | null;
   days: DaySchedule;
   neighborhood: string;
   last_updated: string;

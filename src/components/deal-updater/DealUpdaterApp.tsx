@@ -2,12 +2,15 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import exifr from "exifr";
+import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Camera,
   Check,
   RotateCcw,
   ChevronDown,
   ChevronUp,
+  Trash2,
   X,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
@@ -26,7 +29,27 @@ const MAGIC_MESSAGES = [
   "Sprinkling unicorn dust...",
 ];
 
-export default function DealUpdaterApp() {
+// Claude API only accepts these media types for images
+const SUPPORTED_MEDIA_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
+function normalizeMediaType(type: string): string {
+  if (SUPPORTED_MEDIA_TYPES.has(type)) return type;
+  // Common aliases and unsupported formats → default to jpeg
+  return "image/jpeg";
+}
+
+interface DealUpdaterAppProps {
+  initialVenueId?: string;
+}
+
+export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) {
+  const router = useRouter();
+
   // Core state
   const [view, setView] = useState<AppView>("capture");
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -47,6 +70,10 @@ export default function DealUpdaterApp() {
   // Location state
   const [photoGps, setPhotoGps] = useState<{ lat: number; lng: number } | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; source: string } | null>(null);
+
+  // Delete state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Processing animation
   const [magicMsgIdx, setMagicMsgIdx] = useState(0);
@@ -76,6 +103,30 @@ export default function DealUpdaterApp() {
       .then(setExistingEntries)
       .catch(() => {});
   }, []);
+
+  // Pre-populate from initialVenueId when existing entries are loaded
+  useEffect(() => {
+    if (!initialVenueId || existingEntries.length === 0) return;
+    const venue = existingEntries.find((v) => v.id === initialVenueId);
+    if (!venue) return;
+    setMatchedEntry(venue);
+    setExtractedData({
+      restaurant_name: venue.restaurant_name,
+      deal_description: venue.deal_description,
+      deal_highlight: venue.deal_highlight,
+      category_emoji: venue.category_emoji,
+      days: { ...venue.days },
+      confidence: 1,
+      google_place: {
+        name: venue.restaurant_name,
+        neighborhood: venue.neighborhood,
+        address: "",
+        rating: null,
+      },
+      matched_venue_id: Number(venue.id),
+    });
+    setView("result");
+  }, [initialVenueId, existingEntries]);
 
   // Request user geolocation on mount
   useEffect(() => {
@@ -132,7 +183,7 @@ export default function DealUpdaterApp() {
       const images = [];
       for (const file of imageFiles) {
         const base64 = await fileToBase64(file);
-        images.push({ base64, mediaType: file.type || "image/jpeg" });
+        images.push({ base64, mediaType: normalizeMediaType(file.type) });
       }
 
       // Location priority: EXIF GPS > user geolocation > null
@@ -208,6 +259,17 @@ export default function DealUpdaterApp() {
         ? { lat: photoGps.lat, lng: photoGps.lng, source: "exif" }
         : userLocation;
 
+      // Build base64 images array for photo storage
+      const imagePayloads = [];
+      for (const file of imageFiles) {
+        try {
+          const base64 = await fileToBase64(file);
+          imagePayloads.push({ base64, mediaType: normalizeMediaType(file.type) });
+        } catch {
+          // Skip files that fail to encode
+        }
+      }
+
       const res = await fetch("/api/venues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -215,18 +277,42 @@ export default function DealUpdaterApp() {
           extractedData,
           matchedVenueId: matchedEntry?.id ?? null,
           location,
+          images: imagePayloads.length > 0 ? imagePayloads : undefined,
         }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || `Save failed: ${res.status}`);
       }
-      setView("success");
-      setTimeout(resetApp, 3000);
+      // Redirect to home with venue pre-selected
+      const venueId = data.venue?.id ?? matchedEntry?.id;
+      router.push(venueId ? `/?venue=${venueId}` : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save deal");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Delete deal
+  const handleDelete = async () => {
+    if (!matchedEntry) return;
+    setIsDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/venues?id=${matchedEntry.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || `Delete failed: ${res.status}`);
+      }
+      router.push("/?deleted=1");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete deal");
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -243,6 +329,22 @@ export default function DealUpdaterApp() {
     setPhotoGps(null);
   };
 
+  // Cancel/back: if in update mode navigate home, otherwise reset
+  const handleCancel = () => {
+    if (initialVenueId) {
+      router.push("/");
+    } else {
+      resetApp();
+    }
+  };
+
+  // Show cancel button when not in the initial empty capture state
+  const showCancelButton =
+    view !== "capture" ||
+    capturedImages.length > 0 ||
+    pasteText.trim().length > 0 ||
+    !!initialVenueId;
+
   // Day toggle in result view
   const toggleDay = (day: string) => {
     setExtractedData((prev) =>
@@ -256,6 +358,17 @@ export default function DealUpdaterApp() {
   if (view === "capture") {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
+        {showCancelButton && (
+          <div className="p-3 pb-0">
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
+            >
+              <ArrowLeft size={18} />
+              <span>{initialVenueId ? "Back" : "Cancel"}</span>
+            </button>
+          </div>
+        )}
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm w-full max-w-md flex items-center justify-between">
@@ -371,6 +484,16 @@ export default function DealUpdaterApp() {
   if (view === "processing") {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Cancel button */}
+        <div className="absolute top-3 left-3 z-20">
+          <button
+            onClick={handleCancel}
+            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px] bg-white/80 backdrop-blur-sm rounded-lg px-3"
+          >
+            <ArrowLeft size={18} />
+            <span>Cancel</span>
+          </button>
+        </div>
         {/* Floating sparkles */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[10%] left-[15%] text-4xl animate-bounce opacity-30" style={{ animationDuration: "3s" }}>&#x2728;</div>
@@ -439,6 +562,14 @@ export default function DealUpdaterApp() {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         <div className="flex-1 p-3 space-y-3 pb-36">
+          {/* Cancel/back button */}
+          <button
+            onClick={handleCancel}
+            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
+          >
+            <ArrowLeft size={18} />
+            <span>{initialVenueId ? "Back" : "Cancel"}</span>
+          </button>
           {/* Submit error */}
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm flex items-center justify-between">
@@ -511,6 +642,43 @@ export default function DealUpdaterApp() {
             )}
           </div>
 
+          {/* Deal Highlight & Category Emoji */}
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-200">
+            <label className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Pin Display</label>
+            <div className="flex gap-2 mt-1">
+              <div className="flex-1">
+                <label className="text-[9px] text-gray-500">Price chip</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={extractedData.deal_highlight || ""}
+                    onChange={(e) => setExtractedData({ ...extractedData, deal_highlight: e.target.value || null })}
+                    placeholder="e.g. $5 margs"
+                    className="w-full p-1.5 border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-200"
+                    maxLength={16}
+                  />
+                ) : (
+                  <p className="text-sm font-semibold text-gray-900">{extractedData.deal_highlight || "—"}</p>
+                )}
+              </div>
+              <div className="w-20">
+                <label className="text-[9px] text-gray-500">Emoji</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={extractedData.category_emoji || ""}
+                    onChange={(e) => setExtractedData({ ...extractedData, category_emoji: e.target.value || null })}
+                    placeholder="🍽️"
+                    className="w-full p-1.5 border border-orange-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-orange-200"
+                    maxLength={4}
+                  />
+                ) : (
+                  <p className="text-2xl text-center">{extractedData.category_emoji || "🍽️"}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Deal Description */}
           <div className="bg-white rounded-xl p-3 shadow-sm border border-purple-200">
             <label className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide">Happy Hour Deal</label>
@@ -576,6 +744,35 @@ export default function DealUpdaterApp() {
               Start Over
             </button>
           </div>
+          {matchedEntry && (
+            <div>
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full py-2 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-1 min-h-[44px]"
+                >
+                  <Trash2 size={14} />
+                  Delete This Deal
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="py-2 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] disabled:opacity-60"
+                  >
+                    {isDeleting ? "Deleting..." : "Yes, Delete"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="py-2 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all min-h-[44px]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

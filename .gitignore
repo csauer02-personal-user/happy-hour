@@ -5,6 +5,10 @@
 
 # testing
 /coverage
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
 # production
 /build
@@ -33,4 +37,5 @@ supabase/.temp/
 AGENTS.md
 .vercel
 .env*.local
+.env.test
 tsconfig.tsbuildinfo

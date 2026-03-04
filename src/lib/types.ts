@@ -7,6 +7,8 @@ export interface Venue {
   longitude: number | null;
   restaurant_url: string | null;
   maps_url: string | null;
+  deal_highlight: string | null;
+  category_emoji: string | null;
   mon: boolean;
   tue: boolean;
   wed: boolean;

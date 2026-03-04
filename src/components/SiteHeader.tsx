@@ -5,9 +5,9 @@ import UserMenu from "./UserMenu";
 
 export default function SiteHeader() {
   return (
-    <header className="sticky top-0 z-50 shrink-0">
+    <header className="sticky top-0 z-50 shrink-0 pt-[env(safe-area-inset-top)]">
       <div className="rainbow-bar" />
-      <div className="bg-brand-gradient px-3 py-1.5">
+      <div className="bg-brand-gradient px-3 py-1.5 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
         <div className="max-w-screen-2xl mx-auto flex items-center gap-3">
           <Link
             href="/"

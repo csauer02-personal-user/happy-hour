@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getVenues } from "@/lib/venues";
 import { createClient } from "@/lib/supabase-server";
@@ -14,6 +14,8 @@ export async function GET() {
       id: String(v.id),
       restaurant_name: v.restaurant_name,
       deal_description: v.deal,
+      deal_highlight: v.deal_highlight,
+      category_emoji: v.category_emoji,
       days: {
         monday: v.mon,
         tuesday: v.tue,
@@ -51,8 +53,9 @@ export async function POST(request: Request) {
       extractedData: ExtractedDeal;
       matchedVenueId?: string | null;
       location?: { lat: number; lng: number; source: string } | null;
+      images?: { base64: string; mediaType: string }[];
     } = await request.json();
-    const { extractedData, matchedVenueId, location } = body;
+    const { extractedData, matchedVenueId, location, images } = body;
 
     // Geocode via Google Places API (server-side key — no referrer restriction)
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
@@ -147,6 +150,8 @@ export async function POST(request: Request) {
     const venueRow = {
       restaurant_name: extractedData.restaurant_name,
       deal: extractedData.deal_description,
+      deal_highlight: extractedData.deal_highlight || null,
+      category_emoji: extractedData.category_emoji || null,
       neighborhood: neighborhood || null,
       latitude: lat,
       longitude: lng,
@@ -180,6 +185,41 @@ export async function POST(request: Request) {
       savedRow = data;
     }
 
+    // Upload photos to Supabase Storage and record in venue_photos
+    if (images && images.length > 0 && savedRow?.id) {
+      for (const img of images) {
+        try {
+          const ext = img.mediaType.split("/")[1] || "jpeg";
+          const fileName = `${savedRow.id}/${crypto.randomUUID()}.${ext}`;
+          const buffer = Buffer.from(img.base64, "base64");
+
+          const { error: uploadErr } = await admin.storage
+            .from("venue-photos")
+            .upload(fileName, buffer, { contentType: img.mediaType });
+
+          if (uploadErr) {
+            console.error("[Photos] Upload failed:", uploadErr.message);
+            continue;
+          }
+
+          const { error: insertErr } = await admin
+            .from("venue_photos")
+            .insert({
+              venue_id: savedRow.id,
+              storage_path: fileName,
+              media_type: img.mediaType,
+              uploaded_by: user.id,
+            });
+
+          if (insertErr) {
+            console.error("[Photos] DB insert failed:", insertErr.message);
+          }
+        } catch (photoErr) {
+          console.error("[Photos] Failed to process photo:", photoErr);
+        }
+      }
+    }
+
     revalidatePath("/");
 
     return NextResponse.json({ success: true, venue: savedRow });
@@ -187,6 +227,50 @@ export async function POST(request: Request) {
     console.error("Failed to save venue:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to save venue" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Require authenticated user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = request.nextUrl.searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "Missing id parameter" }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+
+    // Delete associated photos from storage and DB
+    const { data: photos } = await admin
+      .from("venue_photos")
+      .select("storage_path")
+      .eq("venue_id", id);
+
+    if (photos && photos.length > 0) {
+      const paths = photos.map((p: { storage_path: string }) => p.storage_path);
+      await admin.storage.from("venue-photos").remove(paths);
+      await admin.from("venue_photos").delete().eq("venue_id", id);
+    }
+
+    // Delete the venue
+    const { error } = await admin.from("venues").delete().eq("id", id);
+    if (error) throw error;
+
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete venue:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete venue" },
       { status: 500 }
     );
   }

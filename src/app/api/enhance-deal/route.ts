@@ -41,7 +41,7 @@ ${JSON.stringify(extractedData, null, 2)}
 
 And this user feedback: "${feedback}"
 
-Please update and improve the data based on the feedback. Return ONLY the updated JSON with the same structure, incorporating the user's corrections and suggestions.
+Please update and improve the data based on the feedback. Return ONLY the updated JSON with the same structure (including deal_highlight and category_emoji fields), incorporating the user's corrections and suggestions.
 
 DO NOT OUTPUT ANYTHING OTHER THAN VALID JSON.`,
           },

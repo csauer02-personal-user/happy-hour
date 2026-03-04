@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useCallback, useMemo, memo, useState } from "react";
+import { useEffect, useCallback, memo, useState } from "react";
 import {
   APIProvider,
   Map,
   AdvancedMarker,
-  InfoWindow,
   useMap,
 } from "@vis.gl/react-google-maps";
 import type { Venue } from "@/lib/types";
+import { getTodayKey } from "@/lib/types";
+import type { GpsState } from "./HappyHourApp";
 
 const MARKER_COLORS = [
   "#e40303", // red
@@ -28,138 +29,377 @@ const ATL_CENTER = { lat: 33.77, lng: -84.39 };
 
 interface MapViewProps {
   venues: Venue[];
-  filteredVenues: Venue[];
   selectedVenue: Venue | null;
   selectedNeighborhood: string | null;
   onMarkerClick: (id: number) => void;
   onMapClick: () => void;
+  userLocation: { lat: number; lng: number } | null;
+  gpsState: GpsState;
+  onGpsStateChange: (state: GpsState) => void;
+  onUserLocationChange: (loc: { lat: number; lng: number }) => void;
+  venueDistances: Map<number, number>;
 }
 
-function MarkerPin({
+function getFaviconUrl(restaurantUrl: string | null): string | null {
+  if (!restaurantUrl) return null;
+  try {
+    const hostname = new URL(restaurantUrl).hostname;
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=64`;
+  } catch {
+    return null;
+  }
+}
+
+function isActiveToday(venue: Venue): boolean {
+  const today = getTodayKey();
+  if (!today || today === "all") return false;
+  return !!venue[today];
+}
+
+function FaviconPin({
+  venue,
   color,
   isSelected,
 }: {
+  venue: Venue;
   color: string;
   isSelected: boolean;
 }) {
-  const size = isSelected ? 36 : 28;
+  const [faviconError, setFaviconError] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const faviconUrl = getFaviconUrl(venue.restaurant_url);
+  const firstLetter = venue.restaurant_name?.charAt(0)?.toUpperCase() || "?";
+  const activeToday = isActiveToday(venue);
+  const emoji = venue.category_emoji || "🍽️";
+  const highlight = venue.deal_highlight;
+
+  const scale = hovered ? 1.28 : 1;
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        filter: isSelected
-          ? "drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
-          : "drop-shadow(0 1px 2px rgba(0,0,0,0.2))",
-        transition: "all 0.2s",
+        transform: `scale(${scale})`,
+        transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        position: "relative",
+        width: 56,
+        height: 68,
+        cursor: "pointer",
       }}
     >
-      <path
-        d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
-        fill={color}
-        stroke="#333"
-        strokeWidth="0.5"
+      {/* Main circle body */}
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
+          background: color,
+          border: isSelected ? "3px solid #333" : "2px solid rgba(0,0,0,0.15)",
+          boxShadow: isSelected
+            ? "0 4px 12px rgba(0,0,0,0.35)"
+            : "0 2px 6px rgba(0,0,0,0.2)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+          overflow: "visible",
+        }}
+      >
+        {/* Favicon disc */}
+        <div
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: "50%",
+            background: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "inset 0 1px 3px rgba(0,0,0,0.1)",
+          }}
+        >
+          {faviconUrl && !faviconError ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={faviconUrl}
+              alt=""
+              width={26}
+              height={26}
+              style={{ borderRadius: 4 }}
+              loading="lazy"
+              onError={() => setFaviconError(true)}
+            />
+          ) : (
+            <span
+              style={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: color === "#ffffff" ? "#750787" : color,
+                lineHeight: 1,
+              }}
+            >
+              {firstLetter}
+            </span>
+          )}
+        </div>
+
+        {/* Price chip — top-left */}
+        {highlight && (
+          <div
+            style={{
+              position: "absolute",
+              top: -6,
+              left: -4,
+              background: "#1a1a2e",
+              color: "#fff",
+              fontSize: 9,
+              fontWeight: 700,
+              padding: "2px 5px",
+              borderRadius: 8,
+              whiteSpace: "nowrap",
+              lineHeight: 1.2,
+              maxWidth: 72,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            }}
+          >
+            {highlight}
+          </div>
+        )}
+
+        {/* Category emoji badge — bottom-right */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: -2,
+            right: -4,
+            width: 22,
+            height: 22,
+            borderRadius: "50%",
+            background: "white",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            fontSize: 13,
+            lineHeight: 1,
+          }}
+        >
+          {emoji}
+        </div>
+      </div>
+
+      {/* Pointer triangle */}
+      <div
+        style={{
+          width: 0,
+          height: 0,
+          borderLeft: "8px solid transparent",
+          borderRight: "8px solid transparent",
+          borderTop: `10px solid ${color}`,
+          margin: "-2px auto 0",
+        }}
       />
-      <circle cx="12" cy="9" r="3" fill="white" opacity="0.8" />
-    </svg>
+
+      {/* Active-today dot — bottom-center */}
+      {activeToday && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: "#22c55e",
+            border: "1.5px solid white",
+            boxShadow: "0 0 4px rgba(34,197,94,0.6)",
+          }}
+        />
+      )}
+
+      {/* Hover tooltip */}
+      {hovered && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            marginTop: 4,
+            background: "white",
+            borderRadius: 12,
+            padding: "4px 10px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+            whiteSpace: "nowrap",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: 600, color: "#1a1a2e" }}>
+            {venue.restaurant_name}
+          </span>
+          {venue.neighborhood && (
+            <span style={{ fontSize: 10, color: "#888", marginLeft: 6 }}>
+              {venue.neighborhood}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
-function InfoWindowContent({ venue, onClose }: { venue: Venue; onClose: () => void }) {
-  const [faviconError, setFaviconError] = useState(false);
+/* ME Beacon — user's location marker */
+function MeBeacon() {
+  return (
+    <div style={{ position: "relative", width: 46, height: 60, pointerEvents: "none" }}>
+      {/* Radar rings */}
+      <div className="me-radar-ring me-radar-ring-1" />
+      <div className="me-radar-ring me-radar-ring-2" />
 
-  let faviconUrl: string | null = null;
-  if (venue.restaurant_url) {
-    try {
-      const hostname = new URL(venue.restaurant_url).hostname;
-      faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=32`;
-    } catch {
-      // invalid URL
-    }
-  }
+      {/* Main circle */}
+      <div
+        className="me-beacon-pulse"
+        style={{
+          width: 46,
+          height: 46,
+          borderRadius: "50%",
+          background: "linear-gradient(135deg, #750787, #ff8c00)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 10px rgba(117,7,135,0.4)",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        <span style={{ fontSize: 22, lineHeight: 1 }}>🙋</span>
+      </div>
 
-  const firstLetter = venue.restaurant_name?.charAt(0)?.toUpperCase() || "?";
+      {/* ME pill label */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "linear-gradient(135deg, #750787, #ff8c00)",
+          color: "white",
+          fontSize: 9,
+          fontWeight: 800,
+          padding: "1px 6px",
+          borderRadius: 6,
+          letterSpacing: 1,
+          zIndex: 2,
+        }}
+      >
+        ME
+      </div>
+    </div>
+  );
+}
+
+/* GPS Locate Button */
+function GpsButton({
+  gpsState,
+  onLocate,
+}: {
+  gpsState: GpsState;
+  onLocate: () => void;
+}) {
+  const isAcquiring = gpsState === "acquiring";
 
   return (
-    <InfoWindow
-      position={{ lat: venue.latitude!, lng: venue.longitude! }}
-      onCloseClick={onClose}
-      pixelOffset={[0, -35]}
+    <button
+      onClick={onLocate}
+      disabled={gpsState === "denied"}
+      className="group"
+      style={{
+        position: "absolute",
+        bottom: 110,
+        right: 10,
+        zIndex: 5,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 2,
+        background: "none",
+        border: "none",
+        cursor: gpsState === "denied" ? "not-allowed" : "pointer",
+        opacity: gpsState === "denied" ? 0.4 : 1,
+      }}
+      title="Locate me"
     >
-      <div className="info-window-rainbow min-w-[220px] max-w-[280px]">
-        <div className="rainbow-bar" />
-        <div className="px-3 py-2">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center shrink-0">
-              {faviconUrl && !faviconError ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={faviconUrl}
-                  alt=""
-                  width={16}
-                  height={16}
-                  className="rounded-sm"
-                  loading="lazy"
-                  onError={() => setFaviconError(true)}
-                />
-              ) : (
-                <span className="text-[10px] font-bold text-brand-purple/70 leading-none">
-                  {firstLetter}
-                </span>
-              )}
-            </div>
-            <h3 className="font-bold text-brand-purple text-[14px] leading-tight">
-              {venue.restaurant_name}
-            </h3>
-          </div>
-          <p className="text-[13px] text-gray-600 mt-1 leading-snug line-clamp-2">
-            {venue.deal}
-          </p>
-          <div className="flex gap-3 mt-1.5">
-            {venue.restaurant_url && (
-              <a
-                href={venue.restaurant_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13px] text-brand-purple font-medium hover:underline"
-              >
-                Site
-              </a>
-            )}
-            {venue.maps_url && (
-              <a
-                href={venue.maps_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13px] text-brand-purple font-medium hover:underline"
-              >
-                Go
-              </a>
-            )}
-          </div>
-        </div>
-        <div className="rainbow-bar" />
+      <div
+        style={{
+          width: 56,
+          height: 56,
+          borderRadius: "50%",
+          background: isAcquiring
+            ? "linear-gradient(135deg, #750787, #ff8c00)"
+            : "white",
+          border: isAcquiring ? "none" : "2.5px solid #750787",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+          transition: "background 0.3s, border 0.3s",
+        }}
+      >
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={isAcquiring ? "white" : "#750787"}
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={isAcquiring ? "animate-spin" : ""}
+        >
+          {/* Crosshair icon */}
+          <circle cx="12" cy="12" r="4" />
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+        </svg>
       </div>
-    </InfoWindow>
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          color: "#750787",
+          background: "white",
+          padding: "1px 6px",
+          borderRadius: 8,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        }}
+      >
+        {isAcquiring ? "finding..." : "locate me"}
+      </span>
+    </button>
   );
 }
 
 const MapContent = memo(function MapContent({
   venues,
-  filteredVenues,
   selectedVenue,
   selectedNeighborhood,
   onMarkerClick,
   onMapClick,
+  userLocation,
+  gpsState,
+  onGpsStateChange,
+  onUserLocationChange,
+  venueDistances,
 }: MapViewProps) {
   const map = useMap();
-
-  // Compute which venue IDs are visible
-  const filteredIds = useMemo(
-    () => new Set(filteredVenues.map((v) => v.id)),
-    [filteredVenues]
-  );
 
   // Zoom to neighborhood when selected WITHOUT a venue — venue panTo takes priority.
   // selectedVenue is intentionally excluded from deps: deselecting a venue should NOT
@@ -189,6 +429,31 @@ const MapContent = memo(function MapContent({
     map.panTo({ lat: selectedVenue.latitude, lng: selectedVenue.longitude });
   }, [map, selectedVenue]);
 
+  // Animate to user location when GPS acquires
+  useEffect(() => {
+    if (!map || !userLocation || gpsState !== "located") return;
+    map.panTo(userLocation);
+    map.setZoom(14);
+    // Only run on initial location acquisition
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, gpsState === "located"]);
+
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) return;
+    onGpsStateChange("acquiring");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        onUserLocationChange(loc);
+        onGpsStateChange("located");
+      },
+      () => {
+        onGpsStateChange("denied");
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, [onGpsStateChange, onUserLocationChange]);
+
   const mappableVenues = venues.filter(
     (v) => v.latitude != null && v.longitude != null
   );
@@ -197,42 +462,37 @@ const MapContent = memo(function MapContent({
     <>
       {mappableVenues.map((venue) => {
         const isSelected = selectedVenue?.id === venue.id;
-        const isFiltered = filteredIds.has(venue.id);
-        const isInNeighborhood =
-          !selectedNeighborhood ||
-          venue.neighborhood === selectedNeighborhood;
-
-        const opacity =
-          selectedVenue != null
-            ? isSelected
-              ? 1
-              : 0.2
-            : selectedNeighborhood != null
-              ? isInNeighborhood
-                ? 1
-                : 0.2
-              : isFiltered
-                ? 1
-                : 0.3;
-
         const color = MARKER_COLORS[venue.id % MARKER_COLORS.length];
+
+        // Closer venues get higher z-index when distance sorting active
+        const dist = venueDistances.get(venue.id);
+        const distanceZIndex = dist != null ? Math.max(1, Math.round(100 - dist)) : 1;
+        const zIndex = isSelected ? 1000 : distanceZIndex;
 
         return (
           <AdvancedMarker
             key={venue.id}
             position={{ lat: venue.latitude!, lng: venue.longitude! }}
             onClick={() => onMarkerClick(venue.id)}
-            zIndex={isSelected ? 1000 : 1}
-            style={{ opacity, transition: "opacity 0.3s" }}
+            zIndex={zIndex}
           >
-            <MarkerPin color={color} isSelected={isSelected} />
+            <FaviconPin venue={venue} color={color} isSelected={isSelected} />
           </AdvancedMarker>
         );
       })}
 
-      {selectedVenue && selectedVenue.latitude && selectedVenue.longitude && (
-        <InfoWindowContent venue={selectedVenue} onClose={onMapClick} />
+      {/* ME Beacon */}
+      {userLocation && (
+        <AdvancedMarker
+          position={userLocation}
+          zIndex={999}
+        >
+          <MeBeacon />
+        </AdvancedMarker>
       )}
+
+      {/* GPS Button */}
+      <GpsButton gpsState={gpsState} onLocate={handleLocate} />
     </>
   );
 });
