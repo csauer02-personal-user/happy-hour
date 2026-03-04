@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import SiteHeader from "@/components/SiteHeader";
+import Footer from "@/components/Footer";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -40,7 +42,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="overscroll-none">{children}</body>
+      <body className="flex flex-col min-h-[100dvh] overscroll-none">
+        <SiteHeader />
+        <main className="flex-1 flex flex-col">{children}</main>
+        <Footer />
+      </body>
     </html>
   );
 }

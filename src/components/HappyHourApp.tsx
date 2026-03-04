@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import Link from "next/link";
+import { useState, useCallback, useMemo } from "react";
 import type { Venue, DayFilter } from "@/lib/types";
-import { getTodayKey } from "@/lib/types";
-import { createClient } from "@/lib/supabase-browser";
-import Header from "./Header";
-import UserMenu from "./UserMenu";
+import { getTodayKey, DAYS, DAY_LABELS } from "@/lib/types";
 import Sidebar, { VenueList } from "./Sidebar";
 import MapView from "./MapView";
-import Footer from "./Footer";
 import BottomSheet from "./BottomSheet";
 
 interface HappyHourAppProps {
@@ -21,19 +16,9 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
   const [happeningNow, setHappeningNow] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  // Check auth state for FAB
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserEmail(user?.email ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user?.email ?? null);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+  const todayKey = getTodayKey();
+  const isWeekday = todayKey !== null;
 
   const filteredVenues = useMemo(() => {
     let filtered = initialVenues;
@@ -43,10 +28,10 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
       );
     }
     if (happeningNow) {
-      const todayKey = getTodayKey();
-      if (todayKey) {
+      const today = getTodayKey();
+      if (today) {
         filtered = filtered.filter(
-          (v) => v[todayKey as keyof Pick<Venue, "mon" | "tue" | "wed" | "thu" | "fri">]
+          (v) => v[today as keyof Pick<Venue, "mon" | "tue" | "wed" | "thu" | "fri">]
         );
       }
     }
@@ -61,9 +46,9 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
         if (happeningNow) setHappeningNow(false);
       } else {
         setActiveDay(day);
-        const todayKey = getTodayKey();
-        if (day === todayKey && !happeningNow) setHappeningNow(true);
-        else if (day !== "all" && day !== todayKey && happeningNow) setHappeningNow(false);
+        const today = getTodayKey();
+        if (day === today && !happeningNow) setHappeningNow(true);
+        else if (day !== "all" && day !== today && happeningNow) setHappeningNow(false);
       }
     },
     [activeDay, happeningNow]
@@ -73,8 +58,8 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
     const newState = !happeningNow;
     setHappeningNow(newState);
     if (newState) {
-      const todayKey = getTodayKey();
-      if (todayKey && activeDay !== todayKey) setActiveDay(todayKey);
+      const today = getTodayKey();
+      if (today && activeDay !== today) setActiveDay(today);
     } else {
       setActiveDay("all");
     }
@@ -105,21 +90,36 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
   }, []);
 
   return (
-    <div className="flex flex-col h-[100dvh]">
-      {/* Desktop header — hidden on mobile */}
-      <Header
-        activeDay={activeDay}
-        happeningNow={happeningNow}
-        onDayChange={handleDayChange}
-        onHappeningNowToggle={handleHappeningNowToggle}
-      />
+    <div className="flex flex-col flex-1">
+      {/* Desktop day filter bar — below the site header */}
+      <nav className="hidden md:flex bg-brand-gradient/80 px-3 py-1 items-center gap-1 overflow-x-auto scrollbar-hide shrink-0">
+        <div className="max-w-screen-2xl mx-auto flex items-center gap-1 w-full">
+          {DAYS.map((day) => (
+            <button
+              key={day}
+              onClick={() => handleDayChange(day)}
+              className={`btn-day whitespace-nowrap ${activeDay === day ? "btn-day-active" : ""}`}
+              aria-pressed={activeDay === day}
+            >
+              {DAY_LABELS[day].short}
+            </button>
+          ))}
+          {isWeekday && (
+            <button
+              onClick={handleHappeningNowToggle}
+              className={`btn-day whitespace-nowrap ${happeningNow ? "btn-day-active" : ""}`}
+              aria-pressed={happeningNow}
+            >
+              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${happeningNow ? "bg-brand-purple animate-pulse" : "bg-white/60"}`} />
+              Now
+            </button>
+          )}
+        </div>
+      </nav>
 
-      {/* Main content */}
-      <div
-        className="flex flex-1 overflow-hidden md:mt-[calc(var(--header-height)+3px)]"
-      >
+      {/* Map + Sidebar */}
+      <div className="flex flex-1 overflow-hidden">
         <div className="flex flex-row w-full h-full">
-          {/* Desktop sidebar */}
           <Sidebar
             venues={filteredVenues}
             selectedVenue={selectedVenue}
@@ -128,7 +128,6 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
             onNeighborhoodSelect={handleNeighborhoodSelect}
             isLoading={false}
           />
-          {/* Map — full screen on mobile, flex-1 on desktop */}
           <MapView
             venues={initialVenues}
             filteredVenues={filteredVenues}
@@ -157,25 +156,6 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
           onNeighborhoodSelect={handleNeighborhoodSelect}
         />
       </BottomSheet>
-
-      {/* Mobile user menu — always accessible on mobile */}
-      <div className="md:hidden fixed top-3 right-3 z-50 bg-purple-600/80 backdrop-blur-sm rounded-full shadow-lg">
-        <UserMenu />
-      </div>
-
-      {/* Mobile FAB — always visible, always accessible */}
-      <Link
-        href={userEmail ? "/deal-updater" : "/login"}
-        className="md:hidden fixed right-4 bottom-28 z-50 w-12 h-12 rounded-full bg-brand-gradient shadow-lg flex items-center justify-center text-white text-xl hover:scale-110 transition-transform active:scale-95"
-        aria-label={userEmail ? "Add deal" : "Sign in"}
-      >
-        {userEmail ? "+" : <span className="text-sm">&#x1f984;</span>}
-      </Link>
-
-      {/* Desktop footer */}
-      <div className="hidden md:block">
-        <Footer />
-      </div>
     </div>
   );
 }

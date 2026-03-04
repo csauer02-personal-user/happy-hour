@@ -85,7 +85,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
+    <div className="flex-1 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-5 w-full max-w-md">
         {checkEmail ? (
           <div className="text-center py-6">

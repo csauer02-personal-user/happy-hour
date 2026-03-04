@@ -90,7 +90,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-4">
+    <div className="flex-1 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 p-4">
       <div className="max-w-4xl mx-auto space-y-4">
         {/* Header */}
         <div className="text-center">

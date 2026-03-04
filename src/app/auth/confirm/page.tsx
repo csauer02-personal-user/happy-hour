@@ -102,7 +102,7 @@ export default function AuthConfirmPage() {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
+      <div className="flex-1 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
           <div className="text-5xl mb-4">🦄</div>
           {error ? (
@@ -116,7 +116,7 @@ export default function AuthConfirmPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
+    <div className="flex-1 bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🦄</div>

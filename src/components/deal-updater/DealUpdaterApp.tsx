@@ -251,7 +251,7 @@ export default function DealUpdaterApp() {
   // ============================
   if (view === "capture") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
+      <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm w-full max-w-md flex items-center justify-between">
@@ -384,7 +384,7 @@ export default function DealUpdaterApp() {
   // ============================
   if (view === "processing") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="flex-1 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
         {/* Floating sparkles */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[10%] left-[15%] text-4xl animate-bounce opacity-30" style={{ animationDuration: "3s" }}>&#x2728;</div>
@@ -451,7 +451,7 @@ export default function DealUpdaterApp() {
   // ============================
   if (view === "result" && extractedData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
+      <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         <div className="flex-1 p-3 space-y-3 pb-36">
           {/* Submit error */}
           {error && (
@@ -600,7 +600,7 @@ export default function DealUpdaterApp() {
   // ============================
   if (view === "success") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="flex-1 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
         {/* Celebration sparkles */}
         <div className="absolute inset-0 pointer-events-none">
           {[...Array(12)].map((_, i) => (
