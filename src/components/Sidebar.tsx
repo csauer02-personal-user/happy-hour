@@ -23,9 +23,7 @@ export function VenueList({
   onNeighborhoodSelect,
   venueDistances,
 }: Omit<SidebarProps, "isLoading">) {
-  const [expandedNeighborhoods, setExpandedNeighborhoods] = useState<
-    Set<string>
-  >(new Set());
+  const [openNeighborhood, setOpenNeighborhood] = useState<string | null>(null);
   const selectedRef = useRef<HTMLDivElement>(null);
   const headerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
@@ -47,27 +45,30 @@ export function VenueList({
     );
   }, [venues]);
 
-  // Expand neighborhood when neighborhood header is selected
+  // Scroll header to top of scroll container
+  const scrollHeaderToTop = useCallback((neighborhood: string) => {
+    setTimeout(() => {
+      const el = headerRefs.current.get(neighborhood);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 50);
+  }, []);
+
+  // Open neighborhood when neighborhood header is selected externally
   useEffect(() => {
     if (selectedNeighborhood) {
-      setExpandedNeighborhoods((prev) => {
-        const next = new Set(prev);
-        next.add(selectedNeighborhood);
-        return next;
-      });
+      setOpenNeighborhood(selectedNeighborhood);
+      scrollHeaderToTop(selectedNeighborhood);
     }
-  }, [selectedNeighborhood]);
+  }, [selectedNeighborhood, scrollHeaderToTop]);
 
-  // Expand neighborhood AND scroll to card when venue is selected
+  // Open neighborhood AND scroll to card when venue is selected
   // Delays scroll to wait for: (1) neighborhood DOM expansion, (2) BottomSheet height transition
   useEffect(() => {
     if (!selectedVenue) return;
 
-    setExpandedNeighborhoods((prev) => {
-      const next = new Set(prev);
-      next.add(selectedVenue.neighborhood);
-      return next;
-    });
+    setOpenNeighborhood(selectedVenue.neighborhood);
 
     // 350ms covers the BottomSheet's 300ms CSS transition + DOM expansion
     const timer = setTimeout(() => {
@@ -83,32 +84,24 @@ export function VenueList({
   }, [selectedVenue]);
 
   const toggleNeighborhood = (neighborhood: string) => {
-    setExpandedNeighborhoods((prev) => {
-      const next = new Set(prev);
-      if (next.has(neighborhood)) {
-        next.delete(neighborhood);
-        if (selectedNeighborhood === neighborhood) {
-          onNeighborhoodSelect(null);
-        }
-      } else {
-        next.add(neighborhood);
-        onNeighborhoodSelect(neighborhood);
-        // Scroll header to top of scroll container after DOM expansion
-        setTimeout(() => {
-          const el = headerRefs.current.get(neighborhood);
-          if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "start" });
-          }
-        }, 50);
+    if (openNeighborhood === neighborhood) {
+      // Close the open neighborhood
+      setOpenNeighborhood(null);
+      if (selectedNeighborhood === neighborhood) {
+        onNeighborhoodSelect(null);
       }
-      return next;
-    });
+    } else {
+      // Open this neighborhood (auto-closes previous)
+      setOpenNeighborhood(neighborhood);
+      onNeighborhoodSelect(neighborhood);
+      scrollHeaderToTop(neighborhood);
+    }
   };
 
   return (
     <>
       {grouped.map(([neighborhood, venueList]) => {
-        const isExpanded = expandedNeighborhoods.has(neighborhood);
+        const isExpanded = openNeighborhood === neighborhood;
         const isSelected = selectedNeighborhood === neighborhood;
 
         return (
