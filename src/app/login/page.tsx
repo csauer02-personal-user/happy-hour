@@ -88,41 +88,38 @@ export default function LoginPage() {
         <div className="text-center mb-5">
           <div className="text-3xl mb-2">🦄</div>
           <h1 className="text-xl font-bold text-purple-800">
-            {isForgotPassword ? "Reset Password" : isSignUp ? "Create Account" : "Members Sign In"}
+            {isForgotPassword
+              ? "Reset Your Password"
+              : isSignUp
+                ? "Create an ATL Happy Hour Account"
+                : "Log in to ATL Happy Hour"}
           </h1>
-          <p className="text-purple-600 text-xs mt-1">ATL Happy Hour</p>
         </div>
 
         {isForgotPassword ? (
           <form onSubmit={handleForgotPassword} className="space-y-3">
             <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-purple-700 mb-1"
-              >
+              <label htmlFor="reset-email" className="block text-sm font-medium text-purple-700 mb-1">
                 Email
               </label>
               <input
-                id="email"
+                id="reset-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px]"
-                placeholder="you@example.com"
+                placeholder="name@example.com"
               />
             </div>
 
             {error && (
-              <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
-                {error}
-              </p>
+              <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
 
             {success && (
-              <p className="text-green-700 text-sm bg-green-50 rounded-lg px-3 py-2">
-                {success}
-              </p>
+              <p className="text-green-700 text-sm bg-green-50 rounded-lg px-3 py-2">{success}</p>
             )}
 
             <button
@@ -152,17 +149,30 @@ export default function LoginPage() {
                 required
                 autoComplete={isSignUp ? "email" : "username"}
                 className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px]"
-                placeholder="you@example.com"
+                placeholder="name@example.com"
               />
             </div>
 
             <div>
-              <label
-                htmlFor={isSignUp ? "new-password" : "current-password"}
-                className="block text-sm font-medium text-purple-700 mb-1"
-              >
-                Password
-              </label>
+              {!isSignUp && (
+                <div className="flex justify-between items-center mb-1">
+                  <label htmlFor="current-password" className="block text-sm font-medium text-purple-700">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgotPassword(true); setError(""); setSuccess(""); }}
+                    className="text-xs text-purple-600 hover:text-purple-800 transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+              {isSignUp && (
+                <label htmlFor="new-password" className="block text-sm font-medium text-purple-700 mb-1">
+                  Password
+                </label>
+              )}
               <input
                 key={isSignUp ? "new-password" : "current-password"}
                 id={isSignUp ? "new-password" : "current-password"}
@@ -173,20 +183,16 @@ export default function LoginPage() {
                 required
                 autoComplete={isSignUp ? "new-password" : "current-password"}
                 className="w-full px-3 py-3 rounded-lg border border-purple-200 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white/70 min-h-[44px]"
-                placeholder="••••••••"
+                placeholder={isSignUp ? "Create a password" : "Enter your password"}
               />
             </div>
 
             {error && (
-              <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
-                {error}
-              </p>
+              <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">{error}</p>
             )}
 
             {success && (
-              <p className="text-green-700 text-sm bg-green-50 rounded-lg px-3 py-2">
-                {success}
-              </p>
+              <p className="text-green-700 text-sm bg-green-50 rounded-lg px-3 py-2">{success}</p>
             )}
 
             <button
@@ -195,21 +201,9 @@ export default function LoginPage() {
               className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
             >
               {submitting
-                ? isSignUp ? "Creating account…" : "Signing in…"
-                : isSignUp ? "Create Account" : "Sign In"}
+                ? isSignUp ? "Creating account…" : "Logging in…"
+                : isSignUp ? "Create Account" : "Log In"}
             </button>
-
-            {!isSignUp && (
-              <div className="text-center">
-                <button
-                  type="button"
-                  onClick={() => { setIsForgotPassword(true); setError(""); setSuccess(""); }}
-                  className="text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px] px-4"
-                >
-                  Forgot password?
-                </button>
-              </div>
-            )}
           </form>
         )}
 
@@ -219,7 +213,9 @@ export default function LoginPage() {
             onClick={() => { setIsSignUp(!isSignUp); setIsForgotPassword(false); setError(""); setSuccess(""); }}
             className="text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px] px-4"
           >
-            {isSignUp ? "Already have an account? Sign in" : isForgotPassword ? "Back to sign in" : "Don't have an account? Sign up"}
+            {isSignUp || isForgotPassword
+              ? "Already have an account? Log in"
+              : "Don't have an account? Sign up"}
           </button>
         </div>
 
