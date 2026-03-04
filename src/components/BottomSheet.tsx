@@ -40,6 +40,7 @@ export default function BottomSheet({
     lastY: 0,
     lastTime: 0,
     velocity: 0,
+    isDragging: false, // true only after exceeding drag threshold
   });
 
   const getSnapHeight = useCallback((point: SnapPoint) => {
@@ -58,17 +59,11 @@ export default function BottomSheet({
     }
   }, [selectedVenueId, snap]);
 
-  const handleTouchStart = useCallback(
+  // Minimum px movement before a touch becomes a drag (allows taps through)
+  const DRAG_THRESHOLD = 10;
+
+  const handleHandleTouchStart = useCallback(
     (e: React.TouchEvent) => {
-      const target = e.target as HTMLElement;
-      const isHandle = target.closest("[data-sheet-handle]");
-
-      // In full mode, only drag from handle (let content scroll naturally)
-      if (snap === "full" && !isHandle) {
-        const scrollTop = contentRef.current?.scrollTop ?? 0;
-        if (scrollTop > 0) return; // content is scrolled, let it scroll
-      }
-
       const touch = e.touches[0];
       touchState.current = {
         startY: touch.clientY,
@@ -76,15 +71,15 @@ export default function BottomSheet({
         lastY: touch.clientY,
         lastTime: Date.now(),
         velocity: 0,
+        isDragging: false,
       };
-      setDragging(true);
+      // Don't set dragging yet — wait for threshold in touchmove
     },
     [snap, getSnapHeight]
   );
 
-  const handleTouchMove = useCallback(
+  const handleHandleTouchMove = useCallback(
     (e: React.TouchEvent) => {
-      if (!dragging) return;
       const touch = e.touches[0];
       const now = Date.now();
       const dt = now - touchState.current.lastTime;
@@ -92,17 +87,30 @@ export default function BottomSheet({
       if (dt > 0) touchState.current.velocity = dy / dt;
       touchState.current.lastY = touch.clientY;
       touchState.current.lastTime = now;
+
       const delta = touchState.current.startY - touch.clientY;
+
+      // Only activate drag after exceeding threshold
+      if (!touchState.current.isDragging) {
+        if (Math.abs(delta) < DRAG_THRESHOLD) return;
+        touchState.current.isDragging = true;
+        setDragging(true);
+      }
+
       const maxH = typeof window !== "undefined" ? window.innerHeight * 0.92 : 700;
       const newHeight = Math.max(60, Math.min(maxH, touchState.current.startHeight + delta));
       setDragOffset(newHeight);
     },
-    [dragging]
+    []
   );
 
-  const handleTouchEnd = useCallback(() => {
-    if (!dragging) return;
+  const handleHandleTouchEnd = useCallback(() => {
+    if (!touchState.current.isDragging) {
+      // Touch didn't exceed threshold — it was a tap, not a drag
+      return;
+    }
     setDragging(false);
+    touchState.current.isDragging = false;
     const v = touchState.current.velocity;
     const h = dragOffset;
     const vh = typeof window !== "undefined" ? window.innerHeight : 800;
@@ -118,22 +126,25 @@ export default function BottomSheet({
       if (dFull < dHalf) setSnap("full");
       else setSnap("half"); // Never snap below half
     }
-  }, [dragging, dragOffset, getSnapHeight]);
+  }, [dragOffset, getSnapHeight]);
 
   return (
     <div
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
       style={{
         height: `${currentHeight}px`,
-        transition: dragging ? "none" : "height 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        transition: dragging ? "none" : "height 0.3s ease-out",
       }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
     >
       <div className="h-full bg-gray-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         {/* Handle + Day Filters */}
-        <div data-sheet-handle className="shrink-0 cursor-grab active:cursor-grabbing">
+        <div
+          data-sheet-handle
+          className="shrink-0 cursor-grab active:cursor-grabbing"
+          onTouchStart={handleHandleTouchStart}
+          onTouchMove={handleHandleTouchMove}
+          onTouchEnd={handleHandleTouchEnd}
+        >
           {/* Drag pill */}
           <div className="pt-2 pb-1 flex justify-center">
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -179,6 +190,7 @@ export default function BottomSheet({
         <div
           ref={contentRef}
           className="flex-1 overflow-y-auto sidebar-scroll"
+          style={{ touchAction: "pan-y" }}
         >
           {children}
         </div>
