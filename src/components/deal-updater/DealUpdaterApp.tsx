@@ -13,6 +13,7 @@ import {
   ImagePlus,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
+import UserMenu from "@/components/UserMenu";
 
 type AppView = "capture" | "processing" | "result" | "success";
 
@@ -258,7 +259,7 @@ export default function DealUpdaterApp() {
           <div className="flex items-center justify-between">
             <a href="/" className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white text-sm min-h-[44px] flex items-center">&#x2190; Back</a>
             <h1 className="font-semibold text-base text-white">&#x1f984; Deal Updater</h1>
-            <div className="w-12" />
+            <UserMenu />
           </div>
         </div>
 
@@ -469,12 +470,15 @@ export default function DealUpdaterApp() {
               <RotateCcw size={18} className="text-white" />
             </button>
             <h1 className="font-semibold text-base text-white">&#x1f984; AI Found This</h1>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${isEditing ? "bg-white/30" : "hover:bg-white/20"}`}
-            >
-              <Edit3 size={18} className="text-white" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${isEditing ? "bg-white/30" : "hover:bg-white/20"}`}
+              >
+                <Edit3 size={18} className="text-white" />
+              </button>
+              <UserMenu />
+            </div>
           </div>
         </div>
 
