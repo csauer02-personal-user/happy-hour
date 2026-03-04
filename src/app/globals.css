@@ -63,6 +63,13 @@
 .sidebar-scroll::-webkit-scrollbar-thumb { background: rgba(117, 7, 135, 0.15); border-radius: 2px; }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgba(117, 7, 135, 0.3); }
 
+/* Animated arrow pointing right */
+@keyframes bounce-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+.animate-bounce-x { animation: bounce-x 1s ease-in-out infinite; }
+
 /* Landscape phones — even more compact */
 @media (orientation: landscape) and (max-height: 500px) {
   :root { --header-height: 36px; }

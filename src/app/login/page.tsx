@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [checkEmail, setCheckEmail] = useState("");
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +62,7 @@ export default function LoginPage() {
         } else if (data.user && data.user.identities?.length === 0) {
           setError("An account with this email already exists. Try signing in instead.");
         } else {
-          setSuccess("Check your email for a confirmation link!");
+          setCheckEmail(email);
         }
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({
@@ -85,6 +86,25 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 flex items-center justify-center p-4">
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-5 w-full max-w-md">
+        {checkEmail ? (
+          <div className="text-center py-6">
+            <div className="text-5xl mb-4">✉️</div>
+            <h1 className="text-xl font-bold text-purple-800 mb-2">Check Your Email</h1>
+            <p className="text-purple-600 text-sm mb-6">
+              We just sent a verification link to<br />
+              <span className="font-semibold text-purple-800">{checkEmail}</span>
+            </p>
+            <button
+              type="button"
+              onClick={() => { setCheckEmail(""); setIsSignUp(false); setEmail(""); setPassword(""); }}
+              className="inline-flex items-center gap-2 py-3 px-6 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity min-h-[44px]"
+            >
+              Go to Login
+              <span className="inline-block animate-bounce-x">→</span>
+            </button>
+          </div>
+        ) : (
+        <>
         <div className="text-center mb-5">
           <div className="text-3xl mb-2">🦄</div>
           <h1 className="text-xl font-bold text-purple-800">
@@ -227,6 +247,8 @@ export default function LoginPage() {
             ← Back to Happy Hour
           </Link>
         </div>
+        </>
+        )}
       </div>
     </div>
   );
