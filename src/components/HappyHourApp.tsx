@@ -200,7 +200,6 @@ export default function HappyHourApp({ initialVenues, initialVenueId, showDelete
       <div className="relative flex-1 min-h-0">
         <MapView
           venues={initialVenues}
-          filteredVenues={filteredVenues}
           selectedVenue={selectedVenue}
           selectedNeighborhood={selectedNeighborhood}
           onMarkerClick={handleVenueSelect}
