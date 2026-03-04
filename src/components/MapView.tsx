@@ -82,9 +82,11 @@ function MapContent({
     [filteredVenues]
   );
 
-  // Zoom to neighborhood when selected
+  // Zoom to neighborhood when selected WITHOUT a venue — venue panTo takes priority.
+  // selectedVenue is intentionally excluded from deps: deselecting a venue should NOT
+  // re-trigger fitBounds (acceptance: "deselect venue → map stays at current zoom").
   useEffect(() => {
-    if (!map || !selectedNeighborhood) return;
+    if (!map || !selectedNeighborhood || selectedVenue) return;
 
     const neighborhoodVenues = venues.filter(
       (v) =>
@@ -99,6 +101,7 @@ function MapContent({
       bounds.extend({ lat: v.latitude!, lng: v.longitude! });
     }
     map.fitBounds(bounds, { top: 80, bottom: 20, left: 20, right: 20 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, selectedNeighborhood, venues]);
 
   // Center on selected venue
