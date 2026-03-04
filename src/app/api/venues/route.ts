@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getVenues } from "@/lib/venues";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -28,7 +29,9 @@ export async function GET() {
       longitude: v.longitude,
     }));
 
-    return NextResponse.json(deals);
+    return NextResponse.json(deals, {
+      headers: { "Cache-Control": "no-cache" },
+    });
   } catch (error) {
     console.error("Failed to fetch venues:", error);
     return NextResponse.json([], { status: 200 });
@@ -150,6 +153,8 @@ export async function POST(request: Request) {
       if (error) throw error;
       savedRow = data;
     }
+
+    revalidatePath("/");
 
     return NextResponse.json({ success: true, venue: savedRow });
   } catch (error) {
