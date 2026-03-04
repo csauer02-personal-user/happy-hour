@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import exifr from "exifr";
 import { useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   Camera,
   Check,
   RotateCcw,
@@ -27,6 +28,20 @@ const MAGIC_MESSAGES = [
   "Almost there...",
   "Sprinkling unicorn dust...",
 ];
+
+// Claude API only accepts these media types for images
+const SUPPORTED_MEDIA_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+
+function normalizeMediaType(type: string): string {
+  if (SUPPORTED_MEDIA_TYPES.has(type)) return type;
+  // Common aliases and unsupported formats → default to jpeg
+  return "image/jpeg";
+}
 
 interface DealUpdaterAppProps {
   initialVenueId?: string;
@@ -168,7 +183,7 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
       const images = [];
       for (const file of imageFiles) {
         const base64 = await fileToBase64(file);
-        images.push({ base64, mediaType: file.type || "image/jpeg" });
+        images.push({ base64, mediaType: normalizeMediaType(file.type) });
       }
 
       // Location priority: EXIF GPS > user geolocation > null
@@ -249,7 +264,7 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
       for (const file of imageFiles) {
         try {
           const base64 = await fileToBase64(file);
-          imagePayloads.push({ base64, mediaType: file.type || "image/jpeg" });
+          imagePayloads.push({ base64, mediaType: normalizeMediaType(file.type) });
         } catch {
           // Skip files that fail to encode
         }
@@ -314,6 +329,22 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     setPhotoGps(null);
   };
 
+  // Cancel/back: if in update mode navigate home, otherwise reset
+  const handleCancel = () => {
+    if (initialVenueId) {
+      router.push("/");
+    } else {
+      resetApp();
+    }
+  };
+
+  // Show cancel button when not in the initial empty capture state
+  const showCancelButton =
+    view !== "capture" ||
+    capturedImages.length > 0 ||
+    pasteText.trim().length > 0 ||
+    !!initialVenueId;
+
   // Day toggle in result view
   const toggleDay = (day: string) => {
     setExtractedData((prev) =>
@@ -327,6 +358,17 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
   if (view === "capture") {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
+        {showCancelButton && (
+          <div className="p-3 pb-0">
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
+            >
+              <ArrowLeft size={18} />
+              <span>{initialVenueId ? "Back" : "Cancel"}</span>
+            </button>
+          </div>
+        )}
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm w-full max-w-md flex items-center justify-between">
@@ -442,6 +484,16 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
   if (view === "processing") {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Cancel button */}
+        <div className="absolute top-3 left-3 z-20">
+          <button
+            onClick={handleCancel}
+            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px] bg-white/80 backdrop-blur-sm rounded-lg px-3"
+          >
+            <ArrowLeft size={18} />
+            <span>Cancel</span>
+          </button>
+        </div>
         {/* Floating sparkles */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[10%] left-[15%] text-4xl animate-bounce opacity-30" style={{ animationDuration: "3s" }}>&#x2728;</div>
@@ -510,6 +562,14 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         <div className="flex-1 p-3 space-y-3 pb-36">
+          {/* Cancel/back button */}
+          <button
+            onClick={handleCancel}
+            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
+          >
+            <ArrowLeft size={18} />
+            <span>{initialVenueId ? "Back" : "Cancel"}</span>
+          </button>
           {/* Submit error */}
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm flex items-center justify-between">
