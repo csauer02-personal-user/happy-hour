@@ -523,6 +523,43 @@ export default function DealUpdaterApp() {
             )}
           </div>
 
+          {/* Deal Highlight & Category Emoji */}
+          <div className="bg-white rounded-xl p-3 shadow-sm border border-orange-200">
+            <label className="text-[10px] font-semibold text-orange-600 uppercase tracking-wide">Pin Display</label>
+            <div className="flex gap-2 mt-1">
+              <div className="flex-1">
+                <label className="text-[9px] text-gray-500">Price chip</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={extractedData.deal_highlight || ""}
+                    onChange={(e) => setExtractedData({ ...extractedData, deal_highlight: e.target.value || null })}
+                    placeholder="e.g. $5 margs"
+                    className="w-full p-1.5 border border-orange-200 rounded-lg text-sm focus:ring-2 focus:ring-orange-200"
+                    maxLength={16}
+                  />
+                ) : (
+                  <p className="text-sm font-semibold text-gray-900">{extractedData.deal_highlight || "—"}</p>
+                )}
+              </div>
+              <div className="w-20">
+                <label className="text-[9px] text-gray-500">Emoji</label>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={extractedData.category_emoji || ""}
+                    onChange={(e) => setExtractedData({ ...extractedData, category_emoji: e.target.value || null })}
+                    placeholder="🍽️"
+                    className="w-full p-1.5 border border-orange-200 rounded-lg text-sm text-center focus:ring-2 focus:ring-orange-200"
+                    maxLength={4}
+                  />
+                ) : (
+                  <p className="text-2xl text-center">{extractedData.category_emoji || "🍽️"}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Deal Description */}
           <div className="bg-white rounded-xl p-3 shadow-sm border border-purple-200">
             <label className="text-[10px] font-semibold text-purple-600 uppercase tracking-wide">Happy Hour Deal</label>

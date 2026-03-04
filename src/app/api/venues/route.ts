@@ -14,6 +14,8 @@ export async function GET() {
       id: String(v.id),
       restaurant_name: v.restaurant_name,
       deal_description: v.deal,
+      deal_highlight: v.deal_highlight,
+      category_emoji: v.category_emoji,
       days: {
         monday: v.mon,
         tuesday: v.tue,
@@ -148,6 +150,8 @@ export async function POST(request: Request) {
     const venueRow = {
       restaurant_name: extractedData.restaurant_name,
       deal: extractedData.deal_description,
+      deal_highlight: extractedData.deal_highlight || null,
+      category_emoji: extractedData.category_emoji || null,
       neighborhood: neighborhood || null,
       latitude: lat,
       longitude: lng,

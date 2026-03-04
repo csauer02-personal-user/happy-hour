@@ -52,6 +52,8 @@ Return ONLY a JSON object with this exact structure:
 {
   "restaurant_name": "extracted or provided restaurant name",
   "deal_description": "detailed happy hour description with times, prices, and items",
+  "deal_highlight": "short price chip text like '$5 margs' or '½ off apps' (max ~12 chars, catchy)",
+  "category_emoji": "single emoji for the venue category (🍺 bar, 🍕 pizza, 🍣 sushi, 🌮 tacos, 🍔 burgers, 🍷 wine bar, 🍹 cocktails, 🍽️ general dining, etc.)",
   "days": {
     "monday": true/false,
     "tuesday": true/false,
