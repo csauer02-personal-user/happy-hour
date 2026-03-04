@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function AuthConfirmPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -90,8 +88,7 @@ export default function AuthConfirmPage() {
       if (updateError) {
         setError(updateError.message);
       } else {
-        router.push("/deal-updater");
-        router.refresh();
+        window.location.href = "/deal-updater";
       }
     } catch {
       setError("An unexpected error occurred");
