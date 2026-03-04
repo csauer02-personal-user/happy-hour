@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+import type { AuthChangeEvent } from "@supabase/supabase-js";
 
 export default function AuthConfirmPage() {
   return (
@@ -27,7 +28,7 @@ function ConfirmForm() {
     // Listen for auth events — PASSWORD_RECOVERY fires when a recovery
     // session is established (either via code exchange or hash tokens)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event) => {
+      (event: AuthChangeEvent) => {
         if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
           setReady(true);
         }
@@ -37,7 +38,7 @@ function ConfirmForm() {
     // Try exchanging a PKCE code from the URL query params
     const code = new URLSearchParams(window.location.search).get("code");
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error: codeError }) => {
+      supabase.auth.exchangeCodeForSession(code).then(({ error: codeError }: { error: Error | null }) => {
         if (codeError) {
           setError("Invalid or expired link. Please request a new one.");
         }
@@ -57,7 +58,7 @@ function ConfirmForm() {
       if ((type === "invite" || type === "recovery") && accessToken) {
         supabase.auth
           .setSession({ access_token: accessToken, refresh_token: refreshToken ?? "" })
-          .then(({ error: sessionError }) => {
+          .then(({ error: sessionError }: { error: Error | null }) => {
             if (sessionError) {
               setError("Invalid or expired link. Please request a new one.");
             }
@@ -68,7 +69,7 @@ function ConfirmForm() {
     }
 
     // Check for existing session (redirected from /auth/callback)
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user } }: { data: { user: unknown } }) => {
       if (user) {
         setReady(true);
       } else {

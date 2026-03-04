@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export default function UserMenu() {
   const pathname = usePathname();
@@ -14,7 +15,7 @@ export default function UserMenu() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }: { data: { user: { id: string; email?: string } | null } }) => {
       if (user) {
         setUserEmail(user.email ?? null);
         const { data: profile } = await supabase
@@ -23,7 +24,7 @@ export default function UserMenu() {
       }
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (_event: AuthChangeEvent, session: Session | null) => {
         if (session?.user) {
           setUserEmail(session.user.email ?? null);
           const { data: profile } = await supabase
