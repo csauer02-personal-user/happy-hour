@@ -12,8 +12,10 @@ import {
   ChevronUp,
   Trash2,
   X,
+  Plus,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
+import { createClient } from "@/lib/supabase-browser";
 
 type AppView = "capture" | "processing" | "result" | "success";
 
@@ -75,11 +77,17 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Existing venue photos (loaded from DB for edit mode)
+  const [venuePhotos, setVenuePhotos] = useState<{ id: string; url: string }[]>([]);
+  // Track if new photos were added in result view (for reprocess button)
+  const [hasNewPhotos, setHasNewPhotos] = useState(false);
+
   // Processing animation
   const [magicMsgIdx, setMagicMsgIdx] = useState(0);
   const [processingDots, setProcessingDots] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultPhotoInputRef = useRef<HTMLInputElement>(null);
 
   // Rotate magic messages during processing
   useEffect(() => {
@@ -128,6 +136,27 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     setView("result");
   }, [initialVenueId, existingEntries]);
 
+  // Fetch existing venue photos when editing a venue
+  useEffect(() => {
+    if (!initialVenueId) return;
+    const supabase = createClient();
+    (async () => {
+      const { data: photos } = await supabase
+        .from("venue_photos")
+        .select("id, storage_path")
+        .eq("venue_id", initialVenueId);
+      if (photos && photos.length > 0) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        setVenuePhotos(
+          photos.map((p: { id: string; storage_path: string }) => ({
+            id: p.id,
+            url: `${supabaseUrl}/storage/v1/object/public/venue-photos/${p.storage_path}`,
+          }))
+        );
+      }
+    })();
+  }, [initialVenueId]);
+
   // Request user geolocation on mount
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -170,6 +199,76 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     setCapturedImages((prev) => prev.filter((_, i) => i !== idx));
     setImageFiles((prev) => prev.filter((_, i) => i !== idx));
   };
+
+  // Handle adding photos from the result view
+  const handleResultPhotoAdd = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    for (const file of files) {
+      setCapturedImages((prev) => [...prev, URL.createObjectURL(file)]);
+      setImageFiles((prev) => [...prev, file]);
+      try {
+        const gps = await exifr.gps(file);
+        if (gps?.latitude && gps?.longitude) {
+          setPhotoGps({ lat: gps.latitude, lng: gps.longitude });
+        }
+      } catch {
+        // No EXIF GPS
+      }
+    }
+    setHasNewPhotos(true);
+    event.target.value = "";
+  };
+
+  // Reprocess all photos with AI (existing + new)
+  const reprocessWithAI = useCallback(async () => {
+    if (imageFiles.length === 0) return;
+    setView("processing");
+    setError(null);
+    setMagicMsgIdx(0);
+
+    try {
+      const images = [];
+      for (const file of imageFiles) {
+        const base64 = await fileToBase64(file);
+        images.push({ base64, mediaType: normalizeMediaType(file.type) });
+      }
+
+      const location = photoGps
+        ? { lat: photoGps.lat, lng: photoGps.lng, source: "exif" }
+        : userLocation;
+
+      const res = await fetch("/api/extract-deal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images,
+          textInput: extractedData?.deal_description || "",
+          restaurantName: extractedData?.restaurant_name || "",
+          venues: existingEntries,
+          location,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || `API error: ${res.status}`);
+      }
+
+      const extracted: ExtractedDeal = await res.json();
+      setExtractedData(extracted);
+
+      const match = extracted.matched_venue_id != null
+        ? existingEntries.find((v) => v.id === String(extracted.matched_venue_id))
+        : matchedEntry;
+      setMatchedEntry(match || null);
+      setHasNewPhotos(false);
+      setView("result");
+    } catch (err) {
+      console.error("AI reprocess error:", err);
+      setError(err instanceof Error ? err.message : "Something went wrong");
+      setView("result");
+    }
+  }, [imageFiles, extractedData, existingEntries, photoGps, userLocation, matchedEntry]);
 
   // THE MAGIC: send photos to AI and let it do everything
   const runMagic = useCallback(async () => {
@@ -327,6 +426,8 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     setIsEditing(false);
     setError(null);
     setPhotoGps(null);
+    setHasNewPhotos(false);
+    setShowDeleteConfirm(false);
   };
 
   // Cancel/back: if in update mode navigate home, otherwise reset
@@ -562,14 +663,42 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
         <div className="flex-1 p-3 space-y-3 pb-36">
-          {/* Cancel/back button */}
-          <button
-            onClick={handleCancel}
-            className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
-          >
-            <ArrowLeft size={18} />
-            <span>{initialVenueId ? "Back" : "Cancel"}</span>
-          </button>
+          {/* Top bar: Back + Delete */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={handleCancel}
+              className="flex items-center gap-1 text-sm text-purple-600 hover:text-purple-800 transition-colors min-h-[44px]"
+            >
+              <ArrowLeft size={18} />
+              <span>{initialVenueId ? "Back" : "Cancel"}</span>
+            </button>
+            {matchedEntry && !showDeleteConfirm && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors min-h-[44px] px-3 py-1.5 rounded-lg hover:bg-red-50"
+              >
+                <Trash2 size={16} />
+                <span>Delete</span>
+              </button>
+            )}
+            {matchedEntry && showDeleteConfirm && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] px-3 py-1.5 rounded-lg disabled:opacity-60"
+                >
+                  {isDeleting ? "..." : "Delete"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors min-h-[44px] px-2 py-1.5"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
           {/* Submit error */}
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm flex items-center justify-between">
@@ -610,18 +739,58 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
             </div>
           )}
 
-          {/* Photos */}
-          {capturedImages.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto">
-              {capturedImages.map((img, idx) => (
+          {/* Photo strip: existing venue photos + captured photos + add button */}
+          <div className="flex gap-2 overflow-x-auto items-center">
+            {venuePhotos.map((photo) => (
+              <img
+                key={photo.id}
+                src={photo.url}
+                alt="Venue photo"
+                className="w-20 h-20 object-cover rounded-xl border-2 border-purple-200 flex-shrink-0"
+              />
+            ))}
+            {capturedImages.map((img, idx) => (
+              <div key={`new-${idx}`} className="relative flex-shrink-0">
                 <img
-                  key={idx}
                   src={img}
                   alt={`Photo ${idx + 1}`}
-                  className="w-20 h-20 object-cover rounded-xl border-2 border-purple-200 flex-shrink-0"
+                  className="w-20 h-20 object-cover rounded-xl border-2 border-pink-300 flex-shrink-0 shadow-md"
                 />
-              ))}
-            </div>
+                <button
+                  onClick={() => removeImage(idx)}
+                  className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full flex items-center justify-center shadow-md text-xs font-bold"
+                >
+                  &#x00d7;
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => resultPhotoInputRef.current?.click()}
+              className="w-20 h-20 flex-shrink-0 border-2 border-dashed border-purple-300 rounded-xl flex flex-col items-center justify-center gap-1 hover:bg-purple-50 transition-colors"
+            >
+              <Plus size={20} className="text-purple-400" />
+              <Camera size={14} className="text-purple-400" />
+            </button>
+            <input
+              ref={resultPhotoInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleResultPhotoAdd}
+              className="hidden"
+            />
+          </div>
+
+          {/* Reprocess with AI button (when new photos added) */}
+          {hasNewPhotos && imageFiles.length > 0 && (
+            <button
+              onClick={reprocessWithAI}
+              className="w-full bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 text-white py-2.5 rounded-xl font-medium text-sm hover:from-pink-500 hover:via-purple-500 hover:to-blue-500 transition-all shadow-md flex items-center justify-center gap-2 min-h-[44px]"
+            >
+              <span>&#x1f984;</span>
+              <span>Reprocess with AI ({imageFiles.length} new photo{imageFiles.length > 1 ? "s" : ""})</span>
+              <span>&#x2728;</span>
+            </button>
           )}
 
           {/* Restaurant Name */}
@@ -744,35 +913,6 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
               Start Over
             </button>
           </div>
-          {matchedEntry && (
-            <div>
-              {!showDeleteConfirm ? (
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full py-2 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-1 min-h-[44px]"
-                >
-                  <Trash2 size={14} />
-                  Delete This Deal
-                </button>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                    className="py-2 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] disabled:opacity-60"
-                  >
-                    {isDeleting ? "Deleting..." : "Yes, Delete"}
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="py-2 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all min-h-[44px]"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
