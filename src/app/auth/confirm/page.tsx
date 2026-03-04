@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function AuthConfirmPage() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -93,7 +96,7 @@ export default function AuthConfirmPage() {
         setError(data.error || "Failed to set password");
         setSubmitting(false);
       } else {
-        window.location.href = "/";
+        window.location.href = next;
       }
     } catch {
       setError("An unexpected error occurred");

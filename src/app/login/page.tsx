@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function LoginPage() {
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") || "/";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -25,8 +26,9 @@ export default function LoginPage() {
     try {
       const supabase = createClient();
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const confirmPath = `/auth/confirm?next=${encodeURIComponent(next)}`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/auth/callback?next=/auth/confirm`,
+        redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(confirmPath)}`,
       });
       if (resetError) {
         setError(resetError.message || "Failed to send reset email");
@@ -73,8 +75,7 @@ export default function LoginPage() {
         if (authError) {
           setError(authError.message || "Invalid credentials");
         } else {
-          router.push("/deal-updater");
-          router.refresh();
+          window.location.href = next;
         }
       }
     } catch {

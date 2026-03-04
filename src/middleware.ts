@@ -52,14 +52,18 @@ export async function middleware(request: NextRequest) {
   // Protect /deal-updater/* — requires authenticated user
   if (pathname.startsWith("/deal-updater")) {
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
   }
 
   // Protect /admin/* — requires authenticated user with role=admin
   if (pathname.startsWith("/admin")) {
     if (!user) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("next", pathname);
+      return NextResponse.redirect(loginUrl);
     }
     const { data: profile } = await supabase
       .from("profiles")
