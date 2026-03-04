@@ -47,25 +47,8 @@ export default function UserMenu() {
 
   const handleSignOut = () => {
     setOpen(false);
-    // Full-page redirect to server sign-out route — bulletproof.
-    // Clears all cookies server-side, then redirects to /.
-    // Full page load ensures no stale client state or router cache.
     window.location.href = "/api/auth/signout";
   };
-
-  if (!userEmail) {
-    return (
-      <Link
-        href="/login"
-        className="flex items-center justify-center w-8 h-8 rounded-full text-white/80 hover:bg-white/20 transition-colors"
-        aria-label="Sign in"
-      >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      </Link>
-    );
-  }
 
   return (
     <div className="relative" ref={ref}>
@@ -80,19 +63,33 @@ export default function UserMenu() {
       </button>
       {open && (
         <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50">
-          <div className="px-3 py-1.5 border-b border-gray-100">
-            <p className="text-[10px] text-gray-400 truncate">{userEmail}</p>
-          </div>
-          {isAdmin && (
-            <Link href="/admin" onClick={() => setOpen(false)}
-              className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
-              Admin
-            </Link>
+          {userEmail ? (
+            <>
+              <div className="px-3 py-1.5 border-b border-gray-100">
+                <p className="text-[10px] text-gray-400 truncate">{userEmail}</p>
+              </div>
+              {isAdmin && (
+                <Link href="/admin" onClick={() => setOpen(false)}
+                  className="block px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                  Admin
+                </Link>
+              )}
+              <button onClick={handleSignOut}
+                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="px-3 py-1.5 border-b border-gray-100">
+                <p className="text-[10px] text-gray-400">Not signed in</p>
+              </div>
+              <Link href="/login" onClick={() => setOpen(false)}
+                className="block px-3 py-2 text-sm text-purple-700 hover:bg-purple-50">
+                Sign In
+              </Link>
+            </>
           )}
-          <button onClick={handleSignOut}
-            className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-            Sign Out
-          </button>
         </div>
       )}
     </div>

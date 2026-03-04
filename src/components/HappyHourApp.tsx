@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Venue, DayFilter } from "@/lib/types";
 import { getTodayKey, DAYS, DAY_LABELS } from "@/lib/types";
 import Sidebar, { VenueList } from "./Sidebar";
@@ -16,9 +17,15 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
   const [happeningNow, setHappeningNow] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
 
   const todayKey = getTodayKey();
   const isWeekday = todayKey !== null;
+
+  // Find the portal target in SiteHeader after mount
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("header-nav-slot"));
+  }, []);
 
   const filteredVenues = useMemo(() => {
     let filtered = initialVenues;
@@ -89,35 +96,41 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
     setSelectedVenue(null);
   }, []);
 
+  // Day filter buttons — portaled into SiteHeader on desktop, in BottomSheet on mobile
+  const dayFilters = (
+    <>
+      {DAYS.map((day) => (
+        <button
+          key={day}
+          onClick={() => handleDayChange(day)}
+          className={`btn-day whitespace-nowrap ${activeDay === day ? "btn-day-active" : ""}`}
+          aria-pressed={activeDay === day}
+        >
+          {DAY_LABELS[day].short}
+        </button>
+      ))}
+      {isWeekday && (
+        <button
+          onClick={handleHappeningNowToggle}
+          className={`btn-day whitespace-nowrap ${happeningNow ? "btn-day-active" : ""}`}
+          aria-pressed={happeningNow}
+        >
+          <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${happeningNow ? "bg-brand-purple animate-pulse" : "bg-white/60"}`} />
+          Now
+        </button>
+      )}
+    </>
+  );
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Desktop day filter bar — below the site header */}
-      <nav className="hidden md:flex bg-brand-gradient/80 px-3 py-1 items-center gap-1 overflow-x-auto scrollbar-hide shrink-0">
-        <div className="max-w-screen-2xl mx-auto flex items-center gap-1 w-full">
-          {DAYS.map((day) => (
-            <button
-              key={day}
-              onClick={() => handleDayChange(day)}
-              className={`btn-day whitespace-nowrap ${activeDay === day ? "btn-day-active" : ""}`}
-              aria-pressed={activeDay === day}
-            >
-              {DAY_LABELS[day].short}
-            </button>
-          ))}
-          {isWeekday && (
-            <button
-              onClick={handleHappeningNowToggle}
-              className={`btn-day whitespace-nowrap ${happeningNow ? "btn-day-active" : ""}`}
-              aria-pressed={happeningNow}
-            >
-              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${happeningNow ? "bg-brand-purple animate-pulse" : "bg-white/60"}`} />
-              Now
-            </button>
-          )}
-        </div>
-      </nav>
+      {/* Portal day filters into the SiteHeader nav slot (desktop) */}
+      {headerSlot && createPortal(
+        <nav className="hidden md:contents">{dayFilters}</nav>,
+        headerSlot
+      )}
 
-      {/* Map + Sidebar — min-h-0 allows flex-1 to constrain height */}
+      {/* Map + Sidebar */}
       <div className="flex flex-1 min-h-0">
         <Sidebar
           venues={filteredVenues}

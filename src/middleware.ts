@@ -31,11 +31,23 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  const { pathname, searchParams } = request.nextUrl;
+
+  // Intercept PKCE auth codes that land on the wrong route.
+  // Supabase ignores redirectTo if the URL isn't in the dashboard allowlist,
+  // falling back to the Site URL (/).  Catch those codes and route them
+  // through /auth/callback so the exchange still works.
+  const code = searchParams.get("code");
+  if (code && !pathname.startsWith("/auth/callback")) {
+    const callbackUrl = new URL("/auth/callback", request.url);
+    callbackUrl.searchParams.set("code", code);
+    callbackUrl.searchParams.set("next", "/auth/confirm");
+    return NextResponse.redirect(callbackUrl);
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Protect /deal-updater/* — requires authenticated user
   if (pathname.startsWith("/deal-updater")) {

@@ -16,7 +16,11 @@ export default function SiteHeader() {
             ATL Happy Hour
           </Link>
 
-          <div className="flex-1" />
+          {/* Portal slot: pages can inject nav content here (e.g. day filters) */}
+          <div
+            id="header-nav-slot"
+            className="flex-1 flex items-center gap-1 overflow-x-auto scrollbar-hide"
+          />
 
           <Link
             href="/deal-updater"
