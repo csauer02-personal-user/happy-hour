@@ -44,11 +44,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body: { extractedData: ExtractedDeal; matchedVenueId?: string | null } = await request.json();
-    const { extractedData, matchedVenueId } = body;
+    const body: {
+      extractedData: ExtractedDeal;
+      matchedVenueId?: string | null;
+      location?: { lat: number; lng: number; source: string } | null;
+    } = await request.json();
+    const { extractedData, matchedVenueId, location } = body;
 
-    // Geocode via Google Places API
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    // Geocode via Google Places API (server-side key — no referrer restriction)
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     let lat: number | null = null;
     let lng: number | null = null;
     let restaurant_url: string | null = null;
@@ -59,18 +63,24 @@ export async function POST(request: Request) {
       try {
         const query = encodeURIComponent(`${extractedData.restaurant_name} Atlanta`);
         const textSearchRes = await fetch(
-          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${apiKey}`,
-          { headers: { Referer: 'https://socializers-happyhour-frontend.vercel.app/' } }
+          `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${apiKey}`
         );
         const textSearchData = await textSearchRes.json();
+        console.log(`[Geocode] Text search for "${extractedData.restaurant_name}": status=${textSearchData?.status}, results=${textSearchData?.results?.length ?? 0}`);
+        if (textSearchData?.status !== "OK") {
+          console.warn(`[Geocode] Text search non-OK status: ${textSearchData?.status}`, textSearchData?.error_message);
+        }
         const placeId = textSearchData?.results?.[0]?.place_id;
 
         if (placeId) {
           const detailsRes = await fetch(
-            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,website,formatted_address,address_components,url&key=${apiKey}`,
-            { headers: { Referer: 'https://socializers-happyhour-frontend.vercel.app/' } }
+            `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry,website,formatted_address,address_components,url&key=${apiKey}`
           );
           const detailsData = await detailsRes.json();
+          console.log(`[Geocode] Place details for ${placeId}: status=${detailsData?.status}`);
+          if (detailsData?.status !== "OK") {
+            console.warn(`[Geocode] Place details non-OK status: ${detailsData?.status}`, detailsData?.error_message);
+          }
           const result = detailsData?.result;
 
           if (result) {
@@ -89,9 +99,18 @@ export async function POST(request: Request) {
           }
         }
       } catch (geocodeErr) {
-        console.error("Geocoding failed, proceeding without coordinates:", geocodeErr);
+        console.error("[Geocode] Failed, proceeding without coordinates:", geocodeErr);
       }
     }
+
+    // Fallback: if Google returned no coords, use client GPS location
+    if (lat == null && lng == null && location?.lat && location?.lng) {
+      lat = location.lat;
+      lng = location.lng;
+      console.log(`[Geocode] Using client ${location.source} fallback: lat=${lat}, lng=${lng}`);
+    }
+
+    console.log(`[Geocode] Final coords for "${extractedData.restaurant_name}": lat=${lat}, lng=${lng}, neighborhood=${neighborhood}`);
 
     // Map days to venue columns
     const { days } = extractedData;

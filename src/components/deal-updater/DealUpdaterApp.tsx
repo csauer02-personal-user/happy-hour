@@ -9,7 +9,6 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  ImagePlus,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
 
@@ -54,7 +53,6 @@ export default function DealUpdaterApp() {
   const [processingDots, setProcessingDots] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Rotate magic messages during processing
   useEffect(() => {
@@ -205,12 +203,18 @@ export default function DealUpdaterApp() {
     setIsSubmitting(true);
     setError(null);
     try {
+      // Location priority: EXIF GPS > user geolocation > null
+      const location = photoGps
+        ? { lat: photoGps.lat, lng: photoGps.lng, source: "exif" }
+        : userLocation;
+
       const res = await fetch("/api/venues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           extractedData,
           matchedVenueId: matchedEntry?.id ?? null,
+          location,
         }),
       });
       if (!res.ok) {
@@ -306,24 +310,14 @@ export default function DealUpdaterApp() {
               </>
             )}
 
-            {/* Camera + Gallery buttons */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-pink-300 rounded-xl hover:bg-pink-50 transition-all group min-h-[44px]"
-              >
-                <Camera size={24} className="text-pink-500 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-medium text-pink-600">Camera</span>
-              </button>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center gap-1.5 p-3 border-2 border-dashed border-purple-300 rounded-xl hover:bg-purple-50 transition-all group min-h-[44px]"
-              >
-                <ImagePlus size={24} className="text-purple-500 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-medium text-purple-600">Gallery</span>
-              </button>
-            </div>
+            {/* Add Photo button — mobile OS natively offers camera-or-gallery */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-pink-300 rounded-xl hover:bg-pink-50 transition-all group min-h-[44px] mb-3"
+            >
+              <Camera size={24} className="text-pink-500 group-hover:scale-110 transition-transform" />
+              <span className="text-sm font-medium text-pink-600">Add Photo</span>
+            </button>
 
             {/* Optional text input toggle */}
             <button
@@ -344,15 +338,7 @@ export default function DealUpdaterApp() {
               />
             )}
 
-            {/* Hidden file inputs */}
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageCapture}
-              className="hidden"
-            />
+            {/* Hidden file input — no capture attr lets mobile OS offer camera or gallery */}
             <input
               ref={fileInputRef}
               type="file"
