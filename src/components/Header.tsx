@@ -63,11 +63,11 @@ export default function Header({
   }, [menuOpen]);
 
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
     setUserEmail(null);
     setIsAdmin(false);
     setMenuOpen(false);
+    // POST to server route so cookies are cleared server-side
+    await fetch("/api/auth/signout", { method: "POST", redirect: "manual" });
     router.push("/");
     router.refresh();
   };
