@@ -115,6 +115,33 @@ export async function POST(request: Request) {
 
     console.log(`[Geocode] Final coords for "${extractedData.restaurant_name}": lat=${lat}, lng=${lng}, neighborhood=${neighborhood}`);
 
+    // Normalize neighborhood against existing names (fuzzy match)
+    const admin = createAdminClient();
+    if (neighborhood) {
+      try {
+        const { data: existing } = await admin
+          .from("venues")
+          .select("neighborhood")
+          .not("neighborhood", "is", null)
+          .neq("neighborhood", "");
+        if (existing && existing.length > 0) {
+          const canonicalNames = [...new Set(existing.map((r: { neighborhood: string }) => r.neighborhood))];
+          const normalize = (s: string) =>
+            s.toLowerCase().replace(/\s+atlanta$/i, "").trim();
+          const normalized = normalize(neighborhood);
+          const match = canonicalNames.find(
+            (c: string) => normalize(c) === normalized
+          );
+          if (match) {
+            console.log(`[Neighborhood] Normalized "${neighborhood}" → "${match}"`);
+            neighborhood = match;
+          }
+        }
+      } catch (err) {
+        console.error("[Neighborhood] Normalization failed, using as-is:", err);
+      }
+    }
+
     // Map days to venue columns
     const { days } = extractedData;
     const venueRow = {
@@ -132,7 +159,6 @@ export async function POST(request: Request) {
       fri: days.friday,
     };
 
-    const admin = createAdminClient();
     let savedRow;
 
     if (matchedVenueId) {
