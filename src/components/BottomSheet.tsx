@@ -131,7 +131,7 @@ export default function BottomSheet({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="h-full bg-gray-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="h-full bg-gray-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         {/* Handle + Day Filters */}
         <div data-sheet-handle className="shrink-0 cursor-grab active:cursor-grabbing">
           {/* Drag pill */}

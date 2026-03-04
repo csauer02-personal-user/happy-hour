@@ -4,7 +4,7 @@ export default function Footer() {
   return (
     <footer className="shrink-0 relative z-50 pb-[env(safe-area-inset-bottom)]">
       <div className="rainbow-bar" />
-      <div className="bg-brand-purple/95 px-3 py-1 flex items-center justify-center gap-3">
+      <div className="bg-brand-purple/95 px-3 py-1 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] flex items-center justify-center gap-3">
         <p className="text-white/60 text-[10px]">
           ATL Happy Hour &copy; {new Date().getFullYear()}
         </p>
