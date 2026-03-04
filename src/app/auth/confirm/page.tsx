@@ -13,26 +13,42 @@ export default function AuthConfirmPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
+    const supabase = createClient();
 
-    const params = new URLSearchParams(hash.slice(1));
-    const type = params.get("type");
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
+    // First try: check if we already have a session (PKCE flow — code was
+    // exchanged by /auth/callback before redirecting here)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setReady(true);
+        return;
+      }
 
-    if ((type === "invite" || type === "recovery") && accessToken) {
-      const supabase = createClient();
-      supabase.auth
-        .setSession({ access_token: accessToken, refresh_token: refreshToken ?? "" })
-        .then(({ error }) => {
-          if (error) {
-            setError("Invalid or expired link. Please request a new one.");
-          } else {
-            setReady(true);
-          }
-        });
-    }
+      // Fallback: legacy implicit flow with hash fragments
+      const hash = window.location.hash;
+      if (!hash) {
+        setError("Invalid or expired link. Please request a new one.");
+        return;
+      }
+
+      const params = new URLSearchParams(hash.slice(1));
+      const type = params.get("type");
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+
+      if ((type === "invite" || type === "recovery") && accessToken) {
+        supabase.auth
+          .setSession({ access_token: accessToken, refresh_token: refreshToken ?? "" })
+          .then(({ error: sessionError }) => {
+            if (sessionError) {
+              setError("Invalid or expired link. Please request a new one.");
+            } else {
+              setReady(true);
+            }
+          });
+      } else {
+        setError("Invalid or expired link. Please request a new one.");
+      }
+    });
   }, []);
 
   const handleSetPassword = async (e: React.FormEvent) => {
