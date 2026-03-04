@@ -69,7 +69,10 @@ Return ONLY a JSON object with this exact structure:
     "rating": null
   }
 }
-
+${venues && Array.isArray(venues) && venues.length > 0 ? `
+Existing neighborhoods: [${[...new Set(venues.map((v: { neighborhood?: string | null }) => v.neighborhood).filter(Boolean))].join(", ")}]
+ALWAYS use an existing neighborhood name if the restaurant is in or near that area. Only create a new neighborhood name if none of the existing ones apply. Use the shortest common name (e.g. "Midtown" not "Midtown Atlanta").
+` : ""}
 Focus on:
 - Accurate times (like "4-6 PM" or "Monday-Friday 5-7 PM")
 - Specific prices and items
