@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Camera,
   Check,
-  RotateCcw,
   ChevronDown,
   ChevronUp,
   Trash2,
@@ -454,6 +453,29 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
   };
 
   // ============================
+  // Loading state: editing existing venue, waiting for data
+  // ============================
+  if (initialVenueId && view === "capture" && !extractedData) {
+    return (
+      <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col items-center justify-center p-6">
+        <div className="w-16 h-16 mx-auto mb-3 relative">
+          <div
+            className="w-16 h-16 rounded-full animate-spin"
+            style={{
+              animationDuration: "3s",
+              background: "conic-gradient(from 0deg, #ec4899, #a855f7, #3b82f6, #10b981, #f59e0b, #ec4899)",
+            }}
+          />
+          <div className="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+            <span className="text-2xl">&#x1f984;</span>
+          </div>
+        </div>
+        <p className="text-purple-600 text-sm font-medium">Loading deal...</p>
+      </div>
+    );
+  }
+
+  // ============================
   // VIEW: CAPTURE (photo-first)
   // ============================
   if (view === "capture") {
@@ -662,8 +684,8 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
   if (view === "result" && extractedData) {
     return (
       <div className="flex-1 bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
-        <div className="flex-1 p-3 space-y-3 pb-36">
-          {/* Top bar: Back + Delete */}
+        <div className="flex-1 p-3 space-y-3">
+          {/* Top bar: Back + Edit + Delete */}
           <div className="flex items-center justify-between">
             <button
               onClick={handleCancel}
@@ -672,32 +694,45 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
               <ArrowLeft size={18} />
               <span>{initialVenueId ? "Back" : "Cancel"}</span>
             </button>
-            {matchedEntry && !showDeleteConfirm && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors min-h-[44px] px-3 py-1.5 rounded-lg hover:bg-red-50"
+                onClick={() => setIsEditing(!isEditing)}
+                className={`flex items-center gap-1 text-sm min-h-[44px] px-3 py-1.5 rounded-lg transition-all ${
+                  isEditing
+                    ? "bg-purple-600 text-white"
+                    : "text-purple-600 hover:bg-purple-50"
+                }`}
               >
-                <Trash2 size={16} />
-                <span>Delete</span>
+                {isEditing ? <Check size={16} /> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>}
+                <span>{isEditing ? "Done" : "Edit"}</span>
               </button>
-            )}
-            {matchedEntry && showDeleteConfirm && (
-              <div className="flex items-center gap-2">
+              {matchedEntry && !showDeleteConfirm && (
                 <button
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] px-3 py-1.5 rounded-lg disabled:opacity-60"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-1 text-sm text-red-500 hover:text-red-700 transition-colors min-h-[44px] px-3 py-1.5 rounded-lg hover:bg-red-50"
                 >
-                  {isDeleting ? "..." : "Delete"}
+                  <Trash2 size={16} />
+                  <span>Delete</span>
                 </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors min-h-[44px] px-2 py-1.5"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
+              )}
+              {matchedEntry && showDeleteConfirm && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] px-3 py-1.5 rounded-lg disabled:opacity-60"
+                  >
+                    {isDeleting ? "..." : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="text-sm text-gray-500 hover:text-gray-700 transition-colors min-h-[44px] px-2 py-1.5"
+                  >
+                    No
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           {/* Submit error */}
           {error && (
@@ -887,8 +922,8 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
           <CorrectionBox onSubmit={submitCorrection} />
         </div>
 
-        {/* Fixed bottom submit */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] space-y-1.5">
+        {/* Fixed bottom submit — always above footer */}
+        <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-purple-200 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -896,23 +931,7 @@ export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) 
           >
             <Check size={22} />
             <span>{isSubmitting ? "Saving..." : matchedEntry ? "Update This Deal" : "Add New Deal"}</span>
-            <span>&#x1f984;</span>
           </button>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => { setIsEditing(!isEditing); }}
-              className="py-2 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-all min-h-[44px]"
-            >
-              {isEditing ? "Done Editing" : "&#x270f;&#xfe0f; Edit Fields"}
-            </button>
-            <button
-              onClick={resetApp}
-              className="py-2 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all flex items-center justify-center gap-1 min-h-[44px]"
-            >
-              <RotateCcw size={14} />
-              Start Over
-            </button>
-          </div>
         </div>
       </div>
     );

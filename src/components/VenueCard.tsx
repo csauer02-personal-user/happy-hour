@@ -83,7 +83,7 @@ export default function VenueCard({
             <Link
               href={`/deal-updater?venueId=${venue.id}`}
               onClick={(e) => e.stopPropagation()}
-              className="text-brand-purple/60 hover:text-brand-purple transition-colors"
+              className="text-gray-700 hover:text-brand-purple transition-colors"
               title="Edit deal"
             >
               <svg
