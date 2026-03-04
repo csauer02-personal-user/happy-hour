@@ -2,12 +2,14 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import exifr from "exifr";
+import { useRouter } from "next/navigation";
 import {
   Camera,
   Check,
   RotateCcw,
   ChevronDown,
   ChevronUp,
+  Trash2,
   X,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
@@ -26,7 +28,13 @@ const MAGIC_MESSAGES = [
   "Sprinkling unicorn dust...",
 ];
 
-export default function DealUpdaterApp() {
+interface DealUpdaterAppProps {
+  initialVenueId?: string;
+}
+
+export default function DealUpdaterApp({ initialVenueId }: DealUpdaterAppProps) {
+  const router = useRouter();
+
   // Core state
   const [view, setView] = useState<AppView>("capture");
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
@@ -47,6 +55,10 @@ export default function DealUpdaterApp() {
   // Location state
   const [photoGps, setPhotoGps] = useState<{ lat: number; lng: number } | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; source: string } | null>(null);
+
+  // Delete state
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Processing animation
   const [magicMsgIdx, setMagicMsgIdx] = useState(0);
@@ -76,6 +88,30 @@ export default function DealUpdaterApp() {
       .then(setExistingEntries)
       .catch(() => {});
   }, []);
+
+  // Pre-populate from initialVenueId when existing entries are loaded
+  useEffect(() => {
+    if (!initialVenueId || existingEntries.length === 0) return;
+    const venue = existingEntries.find((v) => v.id === initialVenueId);
+    if (!venue) return;
+    setMatchedEntry(venue);
+    setExtractedData({
+      restaurant_name: venue.restaurant_name,
+      deal_description: venue.deal_description,
+      deal_highlight: venue.deal_highlight,
+      category_emoji: venue.category_emoji,
+      days: { ...venue.days },
+      confidence: 1,
+      google_place: {
+        name: venue.restaurant_name,
+        neighborhood: venue.neighborhood,
+        address: "",
+        rating: null,
+      },
+      matched_venue_id: Number(venue.id),
+    });
+    setView("result");
+  }, [initialVenueId, existingEntries]);
 
   // Request user geolocation on mount
   useEffect(() => {
@@ -229,16 +265,39 @@ export default function DealUpdaterApp() {
           images: imagePayloads.length > 0 ? imagePayloads : undefined,
         }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || `Save failed: ${res.status}`);
       }
-      setView("success");
-      setTimeout(resetApp, 3000);
+      // Redirect to home with venue pre-selected
+      const venueId = data.venue?.id ?? matchedEntry?.id;
+      router.push(venueId ? `/?venue=${venueId}` : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save deal");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Delete deal
+  const handleDelete = async () => {
+    if (!matchedEntry) return;
+    setIsDeleting(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/venues?id=${matchedEntry.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || `Delete failed: ${res.status}`);
+      }
+      router.push("/?deleted=1");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete deal");
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -625,6 +684,35 @@ export default function DealUpdaterApp() {
               Start Over
             </button>
           </div>
+          {matchedEntry && (
+            <div>
+              {!showDeleteConfirm ? (
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full py-2 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-all flex items-center justify-center gap-1 min-h-[44px]"
+                >
+                  <Trash2 size={14} />
+                  Delete This Deal
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="py-2 rounded-lg text-xs font-bold bg-red-500 text-white hover:bg-red-600 transition-all min-h-[44px] disabled:opacity-60"
+                  >
+                    {isDeleting ? "Deleting..." : "Yes, Delete"}
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="py-2 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all min-h-[44px]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );

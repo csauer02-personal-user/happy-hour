@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { getVenues } from "@/lib/venues";
 import { createClient } from "@/lib/supabase-server";
@@ -227,6 +227,50 @@ export async function POST(request: Request) {
     console.error("Failed to save venue:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to save venue" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Require authenticated user
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const id = request.nextUrl.searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "Missing id parameter" }, { status: 400 });
+    }
+
+    const admin = createAdminClient();
+
+    // Delete associated photos from storage and DB
+    const { data: photos } = await admin
+      .from("venue_photos")
+      .select("storage_path")
+      .eq("venue_id", id);
+
+    if (photos && photos.length > 0) {
+      const paths = photos.map((p: { storage_path: string }) => p.storage_path);
+      await admin.storage.from("venue-photos").remove(paths);
+      await admin.from("venue_photos").delete().eq("venue_id", id);
+    }
+
+    // Delete the venue
+    const { error } = await admin.from("venues").delete().eq("id", id);
+    if (error) throw error;
+
+    revalidatePath("/");
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete venue:", error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to delete venue" },
       { status: 500 }
     );
   }

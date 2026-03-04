@@ -13,12 +13,15 @@ export type GpsState = "idle" | "acquiring" | "located" | "denied";
 
 interface HappyHourAppProps {
   initialVenues: Venue[];
+  initialVenueId?: string;
+  showDeletedMessage?: boolean;
 }
 
-export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
+export default function HappyHourApp({ initialVenues, initialVenueId, showDeletedMessage }: HappyHourAppProps) {
   const [activeDay, setActiveDay] = useState<DayFilter>("all");
   const [happeningNow, setHappeningNow] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
+  const [deletedBanner, setDeletedBanner] = useState(showDeletedMessage ?? false);
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string | null>(null);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -31,6 +34,23 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
   useEffect(() => {
     setHeaderSlot(document.getElementById("header-nav-slot"));
   }, []);
+
+  // Pre-select venue from URL param
+  useEffect(() => {
+    if (!initialVenueId) return;
+    const venue = initialVenues.find((v) => String(v.id) === initialVenueId);
+    if (venue) {
+      setSelectedVenue(venue);
+      if (venue.neighborhood) setSelectedNeighborhood(venue.neighborhood);
+    }
+  }, [initialVenueId, initialVenues]);
+
+  // Auto-dismiss deleted banner
+  useEffect(() => {
+    if (!deletedBanner) return;
+    const t = setTimeout(() => setDeletedBanner(false), 3000);
+    return () => clearTimeout(t);
+  }, [deletedBanner]);
 
   // Silent geolocation on mount
   useEffect(() => {
@@ -164,6 +184,12 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Deleted banner */}
+      {deletedBanner && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-center text-sm text-red-700">
+          Deal deleted successfully.
+        </div>
+      )}
       {/* Portal day filters into the SiteHeader nav slot (desktop) */}
       {headerSlot && createPortal(
         <nav className="hidden md:contents">{dayFilters}</nav>,
