@@ -322,7 +322,7 @@ function GpsButton({
       style={{
         position: "absolute",
         bottom: 110,
-        right: 10,
+        right: "calc(10px + env(safe-area-inset-right, 0px))",
         zIndex: 5,
         display: "flex",
         flexDirection: "column",
