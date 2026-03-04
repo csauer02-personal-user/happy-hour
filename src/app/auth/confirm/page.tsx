@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function AuthConfirmPage() {
+  return (
+    <Suspense>
+      <ConfirmForm />
+    </Suspense>
+  );
+}
+
+function ConfirmForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") || "/";
   const [password, setPassword] = useState("");
