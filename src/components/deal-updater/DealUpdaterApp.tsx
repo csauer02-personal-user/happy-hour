@@ -6,14 +6,12 @@ import {
   Camera,
   Check,
   RotateCcw,
-  Edit3,
   ChevronDown,
   ChevronUp,
   X,
   ImagePlus,
 } from "lucide-react";
 import type { ExtractedDeal, ExistingDeal } from "@/lib/deal-types";
-import UserMenu from "@/components/UserMenu";
 
 type AppView = "capture" | "processing" | "result" | "success";
 
@@ -254,15 +252,6 @@ export default function DealUpdaterApp() {
   if (view === "capture") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-3 py-2 shadow-xl">
-          <div className="flex items-center justify-between">
-            <a href="/" className="p-2 hover:bg-white/20 rounded-lg transition-colors text-white text-sm min-h-[44px] flex items-center">&#x2190; Back</a>
-            <h1 className="font-semibold text-base text-white">&#x1f984; Deal Updater</h1>
-            <UserMenu />
-          </div>
-        </div>
-
         <div className="flex-1 flex flex-col items-center justify-center p-4 gap-3">
           {error && (
             <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 text-red-700 text-sm w-full max-w-md flex items-center justify-between">
@@ -463,25 +452,6 @@ export default function DealUpdaterApp() {
   if (view === "result" && extractedData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-blue-50 flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 px-3 py-2 shadow-xl">
-          <div className="flex items-center justify-between">
-            <button onClick={resetApp} className="p-2 hover:bg-white/20 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center">
-              <RotateCcw size={18} className="text-white" />
-            </button>
-            <h1 className="font-semibold text-base text-white">&#x1f984; AI Found This</h1>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className={`p-2 rounded-lg transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center ${isEditing ? "bg-white/30" : "hover:bg-white/20"}`}
-              >
-                <Edit3 size={18} className="text-white" />
-              </button>
-              <UserMenu />
-            </div>
-          </div>
-        </div>
-
         <div className="flex-1 p-3 space-y-3 pb-36">
           {/* Submit error */}
           {error && (

@@ -6,6 +6,7 @@ import type { Venue, DayFilter } from "@/lib/types";
 import { getTodayKey } from "@/lib/types";
 import { createClient } from "@/lib/supabase-browser";
 import Header from "./Header";
+import UserMenu from "./UserMenu";
 import Sidebar, { VenueList } from "./Sidebar";
 import MapView from "./MapView";
 import Footer from "./Footer";
@@ -156,6 +157,11 @@ export default function HappyHourApp({ initialVenues }: HappyHourAppProps) {
           onNeighborhoodSelect={handleNeighborhoodSelect}
         />
       </BottomSheet>
+
+      {/* Mobile user menu — always accessible on mobile */}
+      <div className="md:hidden fixed top-3 right-3 z-50 bg-purple-600/80 backdrop-blur-sm rounded-full shadow-lg">
+        <UserMenu />
+      </div>
 
       {/* Mobile FAB — always visible, always accessible */}
       <Link
