@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Venue } from "@/lib/types";
 
 interface VenueCardProps {
@@ -13,6 +14,8 @@ export default function VenueCard({
   isSelected,
   onSelect,
 }: VenueCardProps) {
+  const [faviconError, setFaviconError] = useState(false);
+
   let faviconUrl: string | null = null;
   if (venue.restaurant_url) {
     try {
@@ -22,6 +25,8 @@ export default function VenueCard({
       // invalid URL, skip favicon
     }
   }
+
+  const firstLetter = venue.restaurant_name?.charAt(0)?.toUpperCase() || "?";
 
   return (
     <div
@@ -48,9 +53,9 @@ export default function VenueCard({
         </div>
 
         <div className="flex flex-col items-center gap-1 shrink-0">
-          {faviconUrl && (
-            <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
+            {faviconUrl && !faviconError ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={faviconUrl}
                 alt=""
@@ -58,9 +63,14 @@ export default function VenueCard({
                 height={16}
                 className="rounded-sm"
                 loading="lazy"
+                onError={() => setFaviconError(true)}
               />
-            </div>
-          )}
+            ) : (
+              <span className="text-[10px] font-bold text-brand-purple/70 leading-none">
+                {firstLetter}
+              </span>
+            )}
+          </div>
           <div className="flex gap-1">
             {venue.restaurant_url && (
               <a
