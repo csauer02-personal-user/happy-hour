@@ -23,7 +23,7 @@ export default function VenueCard({
   if (venue.restaurant_url) {
     try {
       const hostname = new URL(venue.restaurant_url).hostname;
-      faviconUrl = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(hostname)}&sz=32`;
+      faviconUrl = `https://icons.duckduckgo.com/ip3/${encodeURIComponent(hostname)}.ico`;
     } catch {
       // invalid URL, skip favicon
     }
