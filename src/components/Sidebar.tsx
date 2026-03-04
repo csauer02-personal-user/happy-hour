@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Venue } from "@/lib/types";
 import VenueCard from "./VenueCard";
 
@@ -27,6 +27,12 @@ export function VenueList({
     Set<string>
   >(new Set());
   const selectedRef = useRef<HTMLDivElement>(null);
+  const headerRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
+
+  const setHeaderRef = useCallback((neighborhood: string, el: HTMLButtonElement | null) => {
+    if (el) headerRefs.current.set(neighborhood, el);
+    else headerRefs.current.delete(neighborhood);
+  }, []);
 
   // Group venues by neighborhood
   const grouped = useMemo(() => {
@@ -87,6 +93,13 @@ export function VenueList({
       } else {
         next.add(neighborhood);
         onNeighborhoodSelect(neighborhood);
+        // Scroll header to top of scroll container after DOM expansion
+        setTimeout(() => {
+          const el = headerRefs.current.get(neighborhood);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 50);
       }
       return next;
     });
@@ -101,6 +114,7 @@ export function VenueList({
         return (
           <div key={neighborhood}>
             <button
+              ref={(el) => setHeaderRef(neighborhood, el)}
               onClick={() => toggleNeighborhood(neighborhood)}
               className={`neighborhood-header w-full text-left ${
                 isSelected

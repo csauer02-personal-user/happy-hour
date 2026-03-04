@@ -27,7 +27,7 @@ export default function BottomSheet({
   isLocated,
 }: BottomSheetProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [snap, setSnap] = useState<SnapPoint>("peek");
+  const [snap, setSnap] = useState<SnapPoint>("half");
   const [dragging, setDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
 
@@ -109,17 +109,14 @@ export default function BottomSheet({
 
     if (Math.abs(v) > 0.5) {
       if (v > 0) setSnap(h > vh * 0.4 ? "full" : "half");
-      else setSnap(h < vh * 0.3 ? "peek" : "half");
+      else setSnap("half"); // Never snap below half
     } else {
-      const peekH = getSnapHeight("peek");
       const halfH = getSnapHeight("half");
       const fullH = getSnapHeight("full");
-      const dPeek = Math.abs(h - peekH);
       const dHalf = Math.abs(h - halfH);
       const dFull = Math.abs(h - fullH);
-      if (dPeek <= dHalf && dPeek <= dFull) setSnap("peek");
-      else if (dHalf <= dFull) setSnap("half");
-      else setSnap("full");
+      if (dFull < dHalf) setSnap("full");
+      else setSnap("half"); // Never snap below half
     }
   }, [dragging, dragOffset, getSnapHeight]);
 
@@ -134,7 +131,7 @@ export default function BottomSheet({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      <div className="h-full bg-gray-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden">
+      <div className="h-full bg-gray-50 rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
         {/* Handle + Day Filters */}
         <div data-sheet-handle className="shrink-0 cursor-grab active:cursor-grabbing">
           {/* Drag pill */}
