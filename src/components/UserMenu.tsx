@@ -2,9 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase-browser";
 
 export default function UserMenu() {
+  const pathname = usePathname();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [open, setOpen] = useState(false);
@@ -84,7 +86,7 @@ export default function UserMenu() {
               <div className="px-3 py-1.5 border-b border-gray-100">
                 <p className="text-[10px] text-gray-400">Not signed in</p>
               </div>
-              <Link href="/login" onClick={() => setOpen(false)}
+              <Link href={`/login?next=${encodeURIComponent(pathname)}`} onClick={() => setOpen(false)}
                 className="block px-3 py-2 text-sm text-purple-700 hover:bg-purple-50">
                 Sign In
               </Link>
